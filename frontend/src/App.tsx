@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import "./route-desk.css";
+import { RouteMap } from "./RouteMap";
 
 type RouteVariant = {
   route_id: string;
@@ -52,10 +53,46 @@ function App() {
   const [variants, setVariants] = useState<RouteVariant[]>([]);
   const [selectedTrip, setSelectedTrip] = useState("");
   const [steps, setSteps] = useState<DriverStep[]>([]);
+  const [routeShape, setRouteShape] = useState<[number, number][]>([]);
+  const [routeMapLoading, setRouteMapLoading] = useState(false);
+  const [routeMapError, setRouteMapError] = useState("");
   const [useAi, setUseAi] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [built, setBuilt] = useState(false);
+
+  useEffect(() => {
+    if (!selectedTrip) return;
+
+    const controller = new AbortController();
+
+    async function loadRouteShape() {
+      try {
+        const response = await fetch(
+          `${API}/api/trips/${encodeURIComponent(selectedTrip)}/pattern`,
+          { signal: controller.signal },
+        );
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.detail ?? "Could not load this route line.");
+        }
+        setRouteShape(payload.shape ?? []);
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setRouteMapError(
+            err instanceof Error
+              ? err.message
+              : "Could not load this route line.",
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) setRouteMapLoading(false);
+      }
+    }
+
+    void loadRouteShape();
+    return () => controller.abort();
+  }, [selectedTrip]);
 
   async function searchRoutes(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,6 +104,9 @@ function App() {
     setVariants([]);
     setSelectedTrip("");
     setSteps([]);
+    setRouteShape([]);
+    setRouteMapLoading(false);
+    setRouteMapError("");
     setBuilt(false);
     try {
       const response = await fetch(
@@ -76,6 +116,7 @@ function App() {
       if (!response.ok)
         throw new Error(payload.detail ?? "Could not find this route.");
       setVariants(payload);
+      if (payload[0]) setRouteMapLoading(true);
       setSelectedTrip(payload[0]?.sample_trip_id ?? "");
     } catch (err) {
       setError(
@@ -205,6 +246,9 @@ function App() {
                   onChange={(event) => {
                     setSelectedTrip(event.target.value);
                     setSteps([]);
+                    setRouteShape([]);
+                    setRouteMapLoading(true);
+                    setRouteMapError("");
                     setBuilt(false);
                   }}
                 >
@@ -267,6 +311,31 @@ function App() {
               <span>
                 <Clock3 size={15} /> {activeVariant.trip_count} trips
               </span>
+            </div>
+          </section>
+        )}
+
+        {activeVariant && (
+          <section className="route-map-panel" aria-label="Route line map">
+            <div className="route-map-heading">
+              <span>ROUTE LINE</span>
+              <span>
+                {activeVariant.route_number} · {routeShape.length || "—"} points
+              </span>
+            </div>
+            <div className="route-map-frame">
+              <RouteMap coordinates={routeShape} />
+              {(routeMapLoading || routeMapError || routeShape.length < 2) && (
+                <div
+                  className="route-map-message"
+                  role={routeMapError ? "alert" : undefined}
+                >
+                  {routeMapError ||
+                    (routeMapLoading
+                      ? "Loading route line…"
+                      : "Route line unavailable")}
+                </div>
+              )}
             </div>
           </section>
         )}

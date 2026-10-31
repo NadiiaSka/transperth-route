@@ -377,6 +377,73 @@ button:disabled {
 .summary-stats svg {
   color: var(--green);
 }
+.route-map-panel {
+  overflow: hidden;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 6px 20px #223c2b0a;
+}
+.route-map-heading {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  color: var(--muted);
+  background: #fbfcf8;
+  font: 10px var(--mono);
+}
+.route-map-heading span:last-child {
+  color: var(--green);
+}
+.route-map-frame {
+  position: relative;
+  height: 360px;
+  background: #e8eee8;
+}
+.route-map {
+  width: 100%;
+  height: 100%;
+}
+.route-endpoint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.route-endpoint-label {
+  padding: 4px 8px;
+  color: #fff;
+  background: var(--green);
+  box-shadow: 0 1px 4px #17231f66;
+  font: 700 10px var(--mono);
+}
+.route-endpoint-dot {
+  width: 16px;
+  height: 16px;
+  margin-top: -2px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 1px 4px #17231f66;
+}
+.route-endpoint-end .route-endpoint-label,
+.route-endpoint-end .route-endpoint-dot {
+  background: var(--coral);
+}
+.route-map-message {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: #f4f5efb8;
+  font-size: 12px;
+  pointer-events: none;
+}
 .directions-section {
   margin-top: 29px;
   animation: rise-in 0.5s 0.12s ease-out both;
@@ -682,6 +749,9 @@ button:disabled {
     align-items: flex-start;
     gap: 11px;
     padding: 13px;
+  }
+  .route-map-frame {
+    height: 300px;
   }
   .route-badge {
     flex-basis: 50px;
