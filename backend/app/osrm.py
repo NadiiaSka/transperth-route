@@ -13,6 +13,42 @@ from .schemas import (
     ShapeMatchSegment,
 )
 
+_ROUNDABOUT = {"roundabout", "rotary", "roundabout turn"}
+
+
+def _bearing(a: list[float], b: list[float]) -> float:
+    """Compass bearing from [lon, lat] point a to b, degrees 0-360."""
+    lat1, lat2 = math.radians(a[1]), math.radians(b[1])
+    dlon = math.radians(b[0] - a[0])
+    x = math.sin(dlon) * math.cos(lat2)
+    y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon)
+    return (math.degrees(math.atan2(x, y)) + 360) % 360
+
+
+def _roundabout_turn(steps: list[dict], index: int) -> str | None:
+    """L/R from geometry: approach heading vs departure heading.
+
+    Compass bearings increase clockwise, so a positive delta means the
+    driver steered right. OSRM's maneuver modifier/bearings sit on the
+    circle itself and don't reflect the overall direction change.
+    """
+    geom = steps[index].get("geometry", {}).get("coordinates", [])
+    if len(geom) < 2:
+        return None
+    if index > 0:
+        prev = steps[index - 1].get("geometry", {}).get("coordinates", [])
+    else:
+        prev = []
+    approach_pts = prev[-2:] if len(prev) >= 2 else geom[:2]
+    approach = _bearing(approach_pts[0], approach_pts[-1])
+    departure = _bearing(geom[-2], geom[-1])
+    delta = (departure - approach + 540) % 360 - 180
+    if delta >= 35:
+        return "R"
+    if delta <= -35:
+        return "L"
+    return None
+
 
 def _coords(stops: list[PatternStop]) -> str:
     return ";".join(f"{s.lon:.6f},{s.lat:.6f}" for s in stops)
@@ -24,7 +60,12 @@ def get_legs(stops: list[PatternStop]) -> list[Leg]:
         return []
     resp = httpx.get(
         f"{settings.osrm_url}/route/v1/driving/{_coords(stops)}",
-        params={"steps": "true", "overview": "false", "continue_straight": "true"},
+        params={
+            "steps": "true",
+            "overview": "false",
+            "continue_straight": "true",
+            "geometries": "geojson",
+        },
         timeout=30,
     )
     data = resp.json()
@@ -40,8 +81,13 @@ def get_legs(stops: list[PatternStop]) -> list[Leg]:
                 road=s.get("name") or None,
                 roundabout_exit=s["maneuver"].get("exit"),
                 distance_m=round(s["distance"]),
+                roundabout_turn=(
+                    _roundabout_turn(leg["steps"], si)
+                    if s["maneuver"]["type"] in _ROUNDABOUT
+                    else None
+                ),
             )
-            for s in leg["steps"]
+            for si, s in enumerate(leg["steps"])
             # "arrive" markers carry no driving action between stops.
             if s["maneuver"]["type"] != "arrive"
         ]

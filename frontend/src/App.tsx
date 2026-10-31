@@ -58,6 +58,35 @@ function displayStopName(name: string | null, fallback: string) {
   return displayName || fallback;
 }
 
+const ROUNDABOUT_MANEUVERS = new Set([
+  "roundabout",
+  "rotary",
+  "roundabout turn",
+]);
+
+type ManeuverContext = {
+  kind: "roundabout" | "end-of-road" | "fork" | "street";
+  label: string;
+};
+
+function maneuverContext(step: DriverStep): ManeuverContext {
+  if (step.maneuver && ROUNDABOUT_MANEUVERS.has(step.maneuver.toLowerCase())) {
+    return {
+      kind: "roundabout",
+      label: step.roundabout_exit
+        ? `ROUNDABOUT · EXIT ${step.roundabout_exit}`
+        : "ROUNDABOUT",
+    };
+  }
+  if (step.maneuver === "end of road") {
+    return { kind: "end-of-road", label: "END OF ROAD" };
+  }
+  if (step.maneuver === "fork") {
+    return { kind: "fork", label: "FORK" };
+  }
+  return { kind: "street", label: "STREET" };
+}
+
 function App() {
   const [routeNumber, setRouteNumber] = useState("");
   const [variants, setVariants] = useState<RouteVariant[]>([]);
@@ -574,77 +603,85 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {steps.map((step) => (
-                    <tr
-                      className={`direction-${step.turn?.toLowerCase() ?? "straight"}`}
-                      key={step.rowId ?? step.step}
-                    >
-                      <td>
-                        <select
-                          className="turn-cell"
-                          aria-label={`Turn direction ${step.step}`}
-                          value={step.turn ?? ""}
-                          onChange={(event) =>
-                            updateStep(step.step, {
-                              turn: event.target.value || null,
-                            })
-                          }
-                        >
-                          <option value="">—</option>
-                          <option value="L">L</option>
-                          <option value="R">R</option>
-                        </select>
-                      </td>
-                      <td className="street-cell">
-                        <input
-                          aria-label={`Edit street or landmark ${step.step}`}
-                          value={step.road ?? ""}
-                          placeholder="Street name unavailable"
-                          onChange={(event) =>
-                            updateStep(step.step, {
-                              road: event.target.value || null,
-                            })
-                          }
-                        />
-                      </td>
-                      <td className="details-cell">
-                        <input
-                          aria-label={`Edit turn details ${step.step}`}
-                          value={step.instruction}
-                          onChange={(event) =>
-                            updateStep(step.step, {
-                              instruction: event.target.value,
-                            })
-                          }
-                        />
-                      </td>
-                      <td className="distance-cell">
-                        {step.distance_m > 0
-                          ? formatDistance(step.distance_m)
-                          : "—"}
-                      </td>
-                      <td className="row-actions">
-                        <button
-                          type="button"
-                          className="row-action add"
-                          aria-label={`Add empty row below row ${step.step}`}
-                          title="Add empty row below"
-                          onClick={() => insertRow(step.step)}
-                        >
-                          <Plus size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          className="row-action delete"
-                          aria-label={`Delete row ${step.step}`}
-                          title="Delete row"
-                          onClick={() => deleteRow(step.step)}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {steps.map((step) => {
+                    const context = maneuverContext(step);
+                    return (
+                      <tr
+                        className={`direction-${step.turn?.toLowerCase() ?? "straight"} context-${context.kind}`}
+                        key={step.rowId ?? step.step}
+                      >
+                        <td>
+                          <select
+                            className="turn-cell"
+                            aria-label={`Turn direction ${step.step}`}
+                            value={step.turn ?? ""}
+                            onChange={(event) =>
+                              updateStep(step.step, {
+                                turn: event.target.value || null,
+                              })
+                            }
+                          >
+                            <option value="">—</option>
+                            <option value="L">L</option>
+                            <option value="R">R</option>
+                          </select>
+                        </td>
+                        <td className="street-cell">
+                          <span
+                            className={`maneuver-badge badge-${context.kind}`}
+                          >
+                            {context.label}
+                          </span>
+                          <input
+                            aria-label={`Edit street or landmark ${step.step}`}
+                            value={step.road ?? ""}
+                            placeholder="Street name unavailable"
+                            onChange={(event) =>
+                              updateStep(step.step, {
+                                road: event.target.value || null,
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="details-cell">
+                          <input
+                            aria-label={`Edit turn details ${step.step}`}
+                            value={step.instruction}
+                            onChange={(event) =>
+                              updateStep(step.step, {
+                                instruction: event.target.value,
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="distance-cell">
+                          {step.distance_m > 0
+                            ? formatDistance(step.distance_m)
+                            : "—"}
+                        </td>
+                        <td className="row-actions">
+                          <button
+                            type="button"
+                            className="row-action add"
+                            aria-label={`Add empty row below row ${step.step}`}
+                            title="Add empty row below"
+                            onClick={() => insertRow(step.step)}
+                          >
+                            <Plus size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            className="row-action delete"
+                            aria-label={`Delete row ${step.step}`}
+                            title="Delete row"
+                            onClick={() => deleteRow(step.step)}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               <div className="table-footer">

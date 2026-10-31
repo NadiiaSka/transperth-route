@@ -30,6 +30,8 @@ class Maneuver(BaseModel):
     road: str | None
     roundabout_exit: int | None
     distance_m: int
+    # L/R computed from approach vs departure geometry at roundabouts
+    roundabout_turn: str | None = None
 
 
 class Leg(BaseModel):

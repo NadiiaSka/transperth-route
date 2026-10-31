@@ -805,6 +805,40 @@ button:disabled {
   font-size: 19px;
   font-weight: 700;
 }
+.street-cell {
+  vertical-align: top;
+}
+.street-cell input {
+  min-height: 30px;
+}
+.maneuver-badge {
+  display: inline-block;
+  margin: 2px 0 0;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font: 9px var(--mono);
+  letter-spacing: 0.4px;
+}
+.badge-roundabout {
+  color: #7a4d00;
+  background: #f5c15c33;
+  border: 1px solid #f5c15c66;
+}
+.badge-end-of-road {
+  color: #5b4bb5;
+  background: #5b4bb514;
+  border: 1px solid #5b4bb533;
+}
+.badge-fork {
+  color: #0f6a7a;
+  background: #0f6a7a14;
+  border: 1px solid #0f6a7a33;
+}
+.badge-street {
+  color: #86918f;
+  background: transparent;
+  border: 1px solid #d8dde0;
+}
 .street-cell input::placeholder {
   color: #86918f;
   font-size: 14px;

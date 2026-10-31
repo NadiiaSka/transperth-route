@@ -13,6 +13,25 @@ def _turn_code(modifier: str | None) -> str | None:
     return None
 
 
+def _roundabout_turn_code(
+    geometry_turn: str | None, exit_no: int | None
+) -> str | None:
+    """L/R for a roundabout exit, from the driver's seat.
+
+    Prefers the geometry-based turn computed in osrm.get_legs (approach vs
+    departure heading). When geometry is unavailable or near-straight, fall
+    back to the exit number: in left-hand-traffic Australia drivers circulate
+    clockwise, so exit 1 always leaves to the left and exit 3+ wraps right.
+    """
+    if geometry_turn:
+        return geometry_turn
+    if exit_no == 1:
+        return "L"
+    if exit_no and exit_no >= 3:
+        return "R"
+    return None
+
+
 def _maneuver_detail(
     m_type: str, modifier: str | None, exit_no: int | None, road: str
 ) -> str:
@@ -42,7 +61,8 @@ def build_steps(maneuvers: list[Maneuver]) -> list[DriverStep]:
     while i < len(maneuvers):
         maneuver = maneuvers[i]
         road, distance, exit_no = maneuver.road, maneuver.distance_m, maneuver.roundabout_exit
-        if maneuver.type in _ROUNDABOUT and i + 1 < len(maneuvers) and maneuvers[i + 1].type in _EXIT:
+        is_roundabout = maneuver.type in _ROUNDABOUT
+        if is_roundabout and i + 1 < len(maneuvers) and maneuvers[i + 1].type in _EXIT:
             following = maneuvers[i + 1]
             road = following.road or road
             distance += following.distance_m
@@ -56,16 +76,37 @@ def build_steps(maneuvers: list[Maneuver]) -> list[DriverStep]:
             continue
 
         if not streets or streets[-1]["road"] != road:
-            turn = maneuver if _turn_code(maneuver.modifier) else pending_turn or maneuver
+            # Roundabout pairs always describe the entry onto their exit road;
+            # plain maneuvers only qualify via a L/R modifier, else fall back
+            # to a turn carried over an unnamed segment.
+            if is_roundabout:
+                turn = maneuver
+            else:
+                turn = maneuver if _turn_code(maneuver.modifier) else pending_turn or maneuver
             streets.append(
                 {
                     "road": road,
                     "distance": 0,
                     "turn": turn,
                     "exit": exit_no or turn.roundabout_exit,
+                    "passed_roundabouts": 0,
                 }
             )
             pending_turn = None
+        else:
+            current = streets[-1]["turn"]
+            if is_roundabout:
+                # Same road in and out: the bus passes straight through this
+                # roundabout, so it must not reclassify the street's turn.
+                streets[-1]["passed_roundabouts"] += 1
+            elif (
+                _turn_code(maneuver.modifier)
+                and not _turn_code(current.modifier)
+                and current.type not in _ROUNDABOUT
+            ):
+                # Match API fragments a turn into several steps on the same
+                # street; the fragment carrying the L/R modifier is the turn.
+                streets[-1]["turn"] = maneuver
 
         streets[-1]["distance"] += distance
         if _turn_code(maneuver.modifier):
@@ -75,14 +116,23 @@ def build_steps(maneuvers: list[Maneuver]) -> list[DriverStep]:
     cumulative = 0
     for street in streets:
         turn = street["turn"]
+        if turn.type in _ROUNDABOUT:
+            turn_code = _roundabout_turn_code(turn.roundabout_turn, street["exit"])
+        else:
+            turn_code = _turn_code(turn.modifier)
+        instruction = _maneuver_detail(
+            turn.type, turn.modifier, street["exit"], street["road"]
+        )
+        passed = street["passed_roundabouts"]
+        if passed:
+            noun = "roundabout" if passed == 1 else "roundabouts"
+            instruction += f", straight through {passed} {noun}"
         rows.append(
             DriverStep(
                 step=len(rows) + 1,
                 type="maneuver",
-                turn=_turn_code(turn.modifier),
-                instruction=_maneuver_detail(
-                    turn.type, turn.modifier, street["exit"], street["road"]
-                ),
+                turn=turn_code,
+                instruction=instruction,
                 maneuver=turn.type,
                 modifier=turn.modifier,
                 road=street["road"],

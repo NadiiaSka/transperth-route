@@ -111,11 +111,13 @@ def trip_match_diagnostics(trip_id: str):
 def trip_steps(trip_id: str, ai: bool = True):
     pattern = trip_pattern(trip_id)
     try:
-        maneuvers = osrm.match_shape(pattern.shape)
+        # Stop-to-stop routing yields maneuver-level detail (roundabouts,
+        # end-of-road) that shape-matching collapses on dense GTFS shapes.
+        legs = osrm.get_legs(pattern.stops)
     except (RuntimeError, httpx.HTTPError) as e:
         raise HTTPException(502, f"Routing service failed: {e}")
     steps = apply_confirmed_route_steps(
-        build_steps(maneuvers),
+        build_steps([m for leg in legs for m in leg.steps]),
         pattern.variant.route_number,
         pattern.variant.shape_id,
     )

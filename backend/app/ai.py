@@ -16,6 +16,7 @@ For each input item, rewrite its "instruction" as a natural navigation cue.
 Rules:
 - Preserve the street name, L/R abbreviation, and roundabout exit number exactly.
 - Preserve end-of-road and fork guidance.
+- Preserve "straight through N roundabout(s)" pass-through guidance.
 - Do not add turns, traffic lights, landmarks, or facts.
 - Return one output per input id, same ids.
 Input:
@@ -43,6 +44,8 @@ def _faithful(step: DriverStep, text: str) -> bool:
     if step.maneuver == "end of road" and "end" not in t:
         return False
     if "1st" in step.instruction.lower() and "1st" not in t:
+        return False
+    if "straight through" in step.instruction.lower() and "through" not in t:
         return False
     return True
 
