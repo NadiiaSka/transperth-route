@@ -66,6 +66,7 @@ function App() {
   const [routeMapError, setRouteMapError] = useState("");
   const [useAi, setUseAi] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [buildingDirections, setBuildingDirections] = useState(false);
   const [error, setError] = useState("");
   const [built, setBuilt] = useState(false);
   const patternPickerRef = useRef<HTMLDivElement | null>(null);
@@ -174,6 +175,7 @@ function App() {
   async function buildDirections() {
     if (!selectedTrip) return;
     setLoading(true);
+    setBuildingDirections(true);
     setError("");
     setSteps([]);
     setBuilt(false);
@@ -194,6 +196,7 @@ function App() {
       );
     } finally {
       setLoading(false);
+      setBuildingDirections(false);
     }
   }
 
@@ -386,7 +389,12 @@ function App() {
                 onClick={buildDirections}
                 disabled={loading || !selectedTrip}
               >
-                <Sparkles size={16} />{" "}
+                <Sparkles
+                  className={
+                    buildingDirections ? "build-button-sparkles" : undefined
+                  }
+                  size={16}
+                />{" "}
                 {loading ? "Building…" : "Build directions"}
               </button>
             </div>
@@ -562,20 +570,43 @@ function App() {
               </div>
             </div>
           ) : (
-            <div className="empty-state">
-              <div className="empty-route-icon">
-                <ArrowDown size={22} />
-              </div>
-              <strong>
-                {loading
-                  ? "Building your route…"
-                  : "Your run sheet will appear here"}
-              </strong>
-              <span>
-                {loading
-                  ? "Reading road maneuvers and street changes."
-                  : "Search for a bus route to begin."}
-              </span>
+            <div
+              className={`empty-state${buildingDirections ? " is-building" : ""}`}
+              role={buildingDirections ? "status" : undefined}
+              aria-live={buildingDirections ? "polite" : undefined}
+            >
+              {buildingDirections ? (
+                <>
+                  <div className="build-animation-track" aria-hidden="true">
+                    <span className="build-route-segment segment-one" />
+                    <span className="build-route-segment segment-two" />
+                    <span className="build-route-segment segment-three" />
+                    <span className="build-route-point route-start">START</span>
+                    <span className="build-route-point route-end">END</span>
+                    <span className="build-animation-bus">
+                      <BusFront size={18} strokeWidth={2.2} />
+                    </span>
+                  </div>
+                  <strong>Following the route</strong>
+                  <span>Matching streets and preparing directions</span>
+                </>
+              ) : (
+                <>
+                  <div className="empty-route-icon">
+                    <ArrowDown size={22} />
+                  </div>
+                  <strong>
+                    {loading
+                      ? "Searching routes…"
+                      : "Your run sheet will appear here"}
+                  </strong>
+                  <span>
+                    {loading
+                      ? "Finding available patterns."
+                      : "Search for a bus route to begin."}
+                  </span>
+                </>
+              )}
             </div>
           )}
         </section>
