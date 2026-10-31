@@ -74,6 +74,7 @@ function App() {
   const [built, setBuilt] = useState(false);
   const patternPickerRef = useRef<HTMLDivElement | null>(null);
   const rowIdRef = useRef(1);
+  const stepsCacheRef = useRef<Map<string, DriverStep[]>>(new Map());
   const patternTriggerRef = useRef<HTMLButtonElement | null>(null);
   const patternOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const selectedVariantIndex = variants.findIndex(
@@ -151,6 +152,7 @@ function App() {
     setVariants([]);
     setSelectedTrip("");
     setSteps([]);
+    stepsCacheRef.current.clear();
     setRouteShape([]);
     setRouteMapLoading(false);
     setRouteMapError("");
@@ -190,12 +192,12 @@ function App() {
       const payload = await response.json();
       if (!response.ok)
         throw new Error(payload.detail ?? "Could not build directions.");
-      setSteps(
-        (payload as DriverStep[]).map((step: DriverStep) => ({
-          ...step,
-          rowId: rowIdRef.current++,
-        })),
-      );
+      const builtSteps = (payload as DriverStep[]).map((step: DriverStep) => ({
+        ...step,
+        rowId: rowIdRef.current++,
+      }));
+      stepsCacheRef.current.set(selectedTrip, builtSteps);
+      setSteps(builtSteps);
       setBuilt(true);
     } catch (err) {
       setError(
@@ -210,12 +212,16 @@ function App() {
   }
 
   function chooseVariant(variant: RouteVariant) {
+    if (built && selectedTrip) {
+      stepsCacheRef.current.set(selectedTrip, steps);
+    }
+    const cached = stepsCacheRef.current.get(variant.sample_trip_id);
     setSelectedTrip(variant.sample_trip_id);
-    setSteps([]);
+    setSteps(cached ?? []);
     setRouteShape([]);
     setRouteMapLoading(true);
     setRouteMapError("");
-    setBuilt(false);
+    setBuilt(Boolean(cached));
     setPatternOpen(false);
   }
 
