@@ -2,6 +2,7 @@
 __pycache__/
 node_modules/
 dist/
+.playwright-mcp/
 .env
 data/gtfs/*
 !data/gtfs/.gitkeep

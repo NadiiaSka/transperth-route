@@ -2,8 +2,10 @@ import httpx
 from fastapi import APIRouter, HTTPException, Query
 
 from . import osrm
+from .ai import reword
 from .db import pool
-from .schemas import Leg, PatternStop, RoutePattern, RouteVariant
+from .schemas import DriverStep, Leg, PatternStop, RoutePattern, RouteVariant
+from .steps import build_steps
 
 router = APIRouter(prefix="/api")
 
@@ -79,3 +81,14 @@ def trip_maneuvers(trip_id: str):
         return osrm.get_legs(pattern.stops)
     except (RuntimeError, httpx.HTTPError) as e:
         raise HTTPException(502, f"Routing service failed: {e}")
+
+
+@router.get("/trips/{trip_id}/steps", response_model=list[DriverStep])
+def trip_steps(trip_id: str, ai: bool = True):
+    pattern = trip_pattern(trip_id)
+    try:
+        legs = osrm.get_legs(pattern.stops)
+    except (RuntimeError, httpx.HTTPError) as e:
+        raise HTTPException(502, f"Routing service failed: {e}")
+    steps = build_steps(legs, pattern.stops)
+    return reword(steps) if ai else steps

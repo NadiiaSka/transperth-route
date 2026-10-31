@@ -39,6 +39,20 @@ class Leg(BaseModel):
     steps: list[Maneuver]
 
 
+class DriverStep(BaseModel):
+    step: int
+    type: str  # "stop" | "depart" | "maneuver"
+    instruction: str
+    maneuver: str | None = None
+    modifier: str | None = None
+    road: str | None = None
+    distance_m: int = 0
+    cumulative_m: int = 0
+    stop_sequence: int | None = None
+    stop_code: str | None = None
+    stop_name: str | None = None
+
+
 class RoutePattern(BaseModel):
     variant: RouteVariant
     stops: list[PatternStop]
