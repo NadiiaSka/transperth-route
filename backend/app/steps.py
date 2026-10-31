@@ -13,23 +13,25 @@ def _turn_code(modifier: str | None) -> str | None:
     return None
 
 
-def _maneuver_detail(m_type: str, modifier: str | None, exit_no: int | None) -> str:
-    side = modifier.rsplit(" ", 1)[-1] if modifier else None
+def _maneuver_detail(
+    m_type: str, modifier: str | None, exit_no: int | None, road: str
+) -> str:
+    side = modifier.rsplit(" ", 1)[-1] if modifier and modifier.endswith(("left", "right")) else None
     if m_type in _ROUNDABOUT:
-        return f"Roundabout, exit {exit_no}" if exit_no else "Roundabout"
+        return f"At the roundabout, take exit {exit_no} onto {road}" if exit_no else f"At the roundabout, continue onto {road}"
     if m_type == "end of road":
-        return f"End of street, turn {side}" if side else "End of street"
+        return f"At the end of the road, turn {side} onto {road}" if side else f"At the end of the road, continue onto {road}"
     if m_type == "fork":
-        return f"Fork, keep {side}" if side else "Fork, continue"
+        return f"At the fork, keep {side} onto {road}" if side else f"At the fork, continue onto {road}"
     if m_type in ("on ramp", "off ramp"):
-        return f"Take the {m_type}{f' {side}' if side else ''}"
+        return f"Take the {side} {m_type} onto {road}" if side else f"Take the {m_type} onto {road}"
     if m_type == "merge":
-        return f"Merge {side}" if side else "Merge"
+        return f"Merge {side} onto {road}" if side else f"Merge onto {road}"
     if modifier == "uturn":
-        return "U-turn"
+        return f"Make a U-turn onto {road}"
     if side:
-        return f"1st turn {side}"
-    return "Continue"
+        return f"Turn {side} onto {road}"
+    return f"Continue onto {road}"
 
 
 def build_steps(maneuvers: list[Maneuver]) -> list[DriverStep]:
@@ -77,7 +79,9 @@ def build_steps(maneuvers: list[Maneuver]) -> list[DriverStep]:
                 step=len(rows) + 1,
                 type="maneuver",
                 turn=_turn_code(turn.modifier),
-                instruction=_maneuver_detail(turn.type, turn.modifier, street["exit"]),
+                instruction=_maneuver_detail(
+                    turn.type, turn.modifier, street["exit"], street["road"]
+                ),
                 maneuver=turn.type,
                 modifier=turn.modifier,
                 road=street["road"],
@@ -97,8 +101,8 @@ def apply_confirmed_route_steps(
         return steps
 
     corrections = {
-        "Cecil Avenue": ("R", "1st turn right"),
-        "Railway Parade": ("L", "To end, turn left"),
+        "Cecil Avenue": ("R", "Turn right onto Cecil Avenue"),
+        "Railway Parade": ("L", "At the end of Railway Parade, turn left"),
     }
     return [
         step.model_copy(

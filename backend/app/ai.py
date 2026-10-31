@@ -10,11 +10,12 @@ from .schemas import DriverStep
 log = logging.getLogger(__name__)
 CHUNK = 60
 
-PROMPT = """You write turn-by-turn instructions for a Perth bus driver.
-For each input item, rewrite its "instruction" as a concise route-detail label.
+PROMPT = """You write concise spoken turn-by-turn instructions for a Perth bus driver.
+For each input item, rewrite its "instruction" as a natural navigation cue.
 Rules:
-- Keep left/right direction, ordinal, and roundabout exit number exactly as given.
-- Do not add street names, traffic lights, landmarks, or facts.
+- Preserve the street name, left/right direction, and roundabout exit number exactly.
+- Preserve end-of-road and fork guidance.
+- Do not add turns, traffic lights, landmarks, or facts.
 - Return one output per input id, same ids.
 Input:
 """
@@ -32,6 +33,10 @@ def _faithful(step: DriverStep, text: str) -> bool:
         if direction not in t:
             return False
     if step.roundabout_exit and str(step.roundabout_exit) not in t:
+        return False
+    if step.road and step.road.lower() not in t:
+        return False
+    if step.maneuver == "end of road" and "end" not in t:
         return False
     if "1st" in step.instruction.lower() and "1st" not in t:
         return False
@@ -52,7 +57,14 @@ def reword(steps: list[DriverStep]) -> list[DriverStep]:
     for i in range(0, len(targets), CHUNK):
         chunk = targets[i : i + CHUNK]
         payload = [
-            {"id": s.step, "instruction": s.instruction, "turn": s.turn, "roundabout_exit": s.roundabout_exit}
+            {
+                "id": s.step,
+                "instruction": s.instruction,
+                "road": s.road,
+                "maneuver": s.maneuver,
+                "turn": s.turn,
+                "roundabout_exit": s.roundabout_exit,
+            }
             for s in chunk
         ]
         try:

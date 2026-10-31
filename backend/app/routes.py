@@ -4,7 +4,14 @@ from fastapi import APIRouter, HTTPException, Query
 from . import osrm
 from .ai import reword
 from .db import pool
-from .schemas import DriverStep, Leg, PatternStop, RoutePattern, RouteVariant
+from .schemas import (
+    DriverStep,
+    Leg,
+    PatternStop,
+    RoutePattern,
+    RouteVariant,
+    ShapeMatchDiagnostics,
+)
 from .steps import apply_confirmed_route_steps, build_steps
 
 router = APIRouter(prefix="/api")
@@ -88,6 +95,15 @@ def trip_maneuvers(trip_id: str):
     try:
         return osrm.get_legs(pattern.stops)
     except (RuntimeError, httpx.HTTPError) as e:
+        raise HTTPException(502, f"Routing service failed: {e}")
+
+
+@router.get("/trips/{trip_id}/match-diagnostics", response_model=ShapeMatchDiagnostics)
+def trip_match_diagnostics(trip_id: str):
+    pattern = trip_pattern(trip_id)
+    try:
+        return osrm.diagnose_shape_match(pattern.shape)
+    except (RuntimeError, httpx.HTTPError, ValueError) as e:
         raise HTTPException(502, f"Routing service failed: {e}")
 
 

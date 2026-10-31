@@ -59,3 +59,42 @@ class RoutePattern(BaseModel):
     stops: list[PatternStop]
     # [lat, lon] pairs along the road geometry
     shape: list[tuple[float, float]]
+
+
+class MatchCoordinate(BaseModel):
+    lat: float
+    lon: float
+
+
+class MatchTracepoint(BaseModel):
+    input_index: int
+    input: MatchCoordinate
+    snapped: MatchCoordinate | None
+    snap_distance_m: float | None
+    matching_index: int | None
+    waypoint_index: int | None
+
+
+class ShapeMatchSegment(BaseModel):
+    confidence: float
+    distance_m: float
+    p95_geometry_deviation_m: float | None
+    max_geometry_deviation_m: float | None
+    streets: list[str]
+    geometry: list[MatchCoordinate]
+
+
+class ShapeMatchDiagnostics(BaseModel):
+    input_point_count: int
+    matched_point_count: int
+    unmatched_point_count: int
+    matching_count: int
+    gtfs_length_m: float
+    matched_length_m: float
+    length_ratio: float | None
+    mean_snap_distance_m: float | None
+    p95_snap_distance_m: float | None
+    p95_geometry_deviation_m: float | None
+    max_geometry_deviation_m: float | None
+    tracepoints: list[MatchTracepoint]
+    matchings: list[ShapeMatchSegment]
