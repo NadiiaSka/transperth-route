@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: transperth
+      POSTGRES_PASSWORD: transperth
+      POSTGRES_DB: transperth
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U transperth"]
+      interval: 5s
+      retries: 10
+
+  # One-off: docker compose --profile prep run --rm osrm-prep
+  osrm-prep:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    profiles: ["prep"]
+    volumes:
+      - ./data/osm:/data
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        osrm-extract -p /opt/car.lua /data/perth.osm.pbf &&
+        osrm-partition /data/perth.osrm &&
+        osrm-customize /data/perth.osrm
+
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    command: osrm-routed --algorithm mld --max-matching-size 5000 /data/perth.osrm
+    volumes:
+      - ./data/osm:/data
+    ports:
+      - "5001:5000"
+
+volumes:
+  pgdata:
