@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -48,10 +48,18 @@ function formatDistance(meters: number) {
     : `${Math.round(meters)} m`;
 }
 
+function displayStopName(name: string | null, fallback: string) {
+  const displayName = name
+    ?.replace(/\s+(?:stand|zone)\s+[a-z0-9]+$/i, "")
+    .trim();
+  return displayName || fallback;
+}
+
 function App() {
   const [routeNumber, setRouteNumber] = useState("");
   const [variants, setVariants] = useState<RouteVariant[]>([]);
   const [selectedTrip, setSelectedTrip] = useState("");
+  const [patternOpen, setPatternOpen] = useState(false);
   const [steps, setSteps] = useState<DriverStep[]>([]);
   const [routeShape, setRouteShape] = useState<[number, number][]>([]);
   const [routeMapLoading, setRouteMapLoading] = useState(false);
@@ -60,6 +68,40 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [built, setBuilt] = useState(false);
+  const patternPickerRef = useRef<HTMLDivElement | null>(null);
+  const patternTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const patternOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const selectedVariantIndex = variants.findIndex(
+    (variant) => variant.sample_trip_id === selectedTrip,
+  );
+
+  useEffect(() => {
+    if (patternOpen) patternOptionRefs.current[selectedVariantIndex]?.focus();
+  }, [patternOpen, selectedVariantIndex]);
+
+  useEffect(() => {
+    if (!patternOpen) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!patternPickerRef.current?.contains(event.target as Node)) {
+        setPatternOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setPatternOpen(false);
+        patternTriggerRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [patternOpen]);
 
   useEffect(() => {
     if (!selectedTrip) return;
@@ -155,6 +197,16 @@ function App() {
     }
   }
 
+  function chooseVariant(variant: RouteVariant) {
+    setSelectedTrip(variant.sample_trip_id);
+    setSteps([]);
+    setRouteShape([]);
+    setRouteMapLoading(true);
+    setRouteMapError("");
+    setBuilt(false);
+    setPatternOpen(false);
+  }
+
   function updateStep(stepNumber: number, changes: Partial<DriverStep>) {
     setSteps((current) =>
       current.map((step) =>
@@ -236,34 +288,97 @@ function App() {
           </form>
           {variants.length > 0 && (
             <div className="variant-row">
-              <label className="field-label" htmlFor="route-variant">
+              <span className="field-label" id="route-variant-label">
                 DIRECTION &amp; PATTERN
-              </label>
-              <div className="select-wrap">
-                <select
-                  id="route-variant"
-                  value={selectedTrip}
-                  onChange={(event) => {
-                    setSelectedTrip(event.target.value);
-                    setSteps([]);
-                    setRouteShape([]);
-                    setRouteMapLoading(true);
-                    setRouteMapError("");
-                    setBuilt(false);
+              </span>
+              <div className="pattern-picker" ref={patternPickerRef}>
+                <button
+                  ref={patternTriggerRef}
+                  className="pattern-trigger"
+                  type="button"
+                  aria-labelledby="route-variant-label"
+                  aria-haspopup="listbox"
+                  aria-expanded={patternOpen}
+                  aria-controls="route-pattern-options"
+                  onClick={() => setPatternOpen((open) => !open)}
+                  onKeyDown={(event) => {
+                    if (event.key === "ArrowDown" && !patternOpen) {
+                      event.preventDefault();
+                      setPatternOpen(true);
+                    }
                   }}
                 >
-                  {variants.map((variant) => (
-                    <option
-                      key={variant.sample_trip_id}
-                      value={variant.sample_trip_id}
-                    >
-                      {variant.agency_id ?? "Operator"} ·{" "}
-                      {variant.headsign ?? "Route pattern"} ·{" "}
-                      {variant.trip_count} trips
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={17} />
+                  <span className="pattern-trigger-copy">
+                    <strong>
+                      {activeVariant
+                        ? `${displayStopName(activeVariant.origin_stop, "unknown start")} to ${displayStopName(activeVariant.destination_stop ?? activeVariant.headsign, "unknown destination")}`
+                        : "Select a route pattern"}
+                    </strong>
+                    <span>
+                      {activeVariant?.agency_id ?? "Operator"} ·{" "}
+                      {activeVariant?.trip_count ?? 0} trips
+                    </span>
+                  </span>
+                  <ChevronDown size={17} />
+                </button>
+                {patternOpen && (
+                  <div
+                    className="pattern-options"
+                    id="route-pattern-options"
+                    role="listbox"
+                    aria-labelledby="route-variant-label"
+                  >
+                    {variants.map((variant, index) => {
+                      const origin = displayStopName(
+                        variant.origin_stop,
+                        "unknown start",
+                      );
+                      const destination = displayStopName(
+                        variant.destination_stop ?? variant.headsign,
+                        "unknown destination",
+                      );
+                      const selected = variant.sample_trip_id === selectedTrip;
+
+                      return (
+                        <button
+                          key={variant.sample_trip_id}
+                          ref={(element) => {
+                            patternOptionRefs.current[index] = element;
+                          }}
+                          className="pattern-option"
+                          type="button"
+                          role="option"
+                          aria-selected={selected}
+                          tabIndex={selected ? 0 : -1}
+                          onClick={() => chooseVariant(variant)}
+                          onKeyDown={(event) => {
+                            if (event.key === "ArrowDown") {
+                              event.preventDefault();
+                              patternOptionRefs.current[
+                                Math.min(index + 1, variants.length - 1)
+                              ]?.focus();
+                            } else if (event.key === "ArrowUp") {
+                              event.preventDefault();
+                              patternOptionRefs.current[
+                                Math.max(index - 1, 0)
+                              ]?.focus();
+                            }
+                          }}
+                        >
+                          <span className="pattern-option-route">
+                            <strong>{origin}</strong>
+                            <ArrowRight size={14} />
+                            <strong>{destination}</strong>
+                          </span>
+                          <span className="pattern-option-meta">
+                            {variant.agency_id ?? "Operator"} ·{" "}
+                            {variant.trip_count} trips
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
               <button
                 className="build-button"
@@ -295,12 +410,18 @@ function App() {
                 DIRECTION {activeVariant.direction_id ?? "—"}
               </span>
               <strong className="summary-route">
-                <span>{activeVariant.origin_stop ?? "Origin unavailable"}</span>
+                <span>
+                  {displayStopName(
+                    activeVariant.origin_stop,
+                    "Origin unavailable",
+                  )}
+                </span>
                 <ArrowRight size={15} />
                 <span>
-                  {activeVariant.destination_stop ??
-                    activeVariant.headsign ??
-                    "Destination unavailable"}
+                  {displayStopName(
+                    activeVariant.destination_stop ?? activeVariant.headsign,
+                    "Destination unavailable",
+                  )}
                 </span>
               </strong>
             </div>
