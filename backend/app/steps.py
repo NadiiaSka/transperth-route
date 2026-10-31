@@ -1,47 +1,43 @@
 """Build driver table rows from OSRM legs; the server owns structure, the AI only rewords."""
-from .schemas import DriverStep, Leg, PatternStop
+from .schemas import DriverStep, Leg
 
 _ROUNDABOUT = {"roundabout", "rotary", "roundabout turn"}
 _EXIT = {"exit roundabout", "exit rotary"}
 
 
-def _maneuver_text(m_type: str, modifier: str | None, road: str | None, exit_no: int | None) -> str:
-    onto = f" onto {road}" if road else ""
-    if m_type == "depart":
-        return f"Continue along {road}" if road else "Continue straight"
+def _turn_code(modifier: str | None) -> str | None:
+    if modifier and modifier.endswith("left"):
+        return "L"
+    if modifier and modifier.endswith("right"):
+        return "R"
+    return None
+
+
+def _maneuver_detail(m_type: str, modifier: str | None, exit_no: int | None) -> str:
+    side = modifier.rsplit(" ", 1)[-1] if modifier else None
     if m_type in _ROUNDABOUT:
-        return f"At the roundabout take exit {exit_no}{onto}" if exit_no else f"At the roundabout{onto}"
+        return f"Roundabout, exit {exit_no}" if exit_no else "Roundabout"
+    if m_type == "end of road":
+        return f"End of street, turn {side}" if side else "End of street"
     if m_type == "fork":
-        return f"Keep {modifier or 'straight'} at the fork{onto}"
+        return f"Fork, keep {side}" if side else "Fork, continue"
     if m_type in ("on ramp", "off ramp"):
-        return f"Take the {m_type}{onto}"
+        return f"Take the {m_type}{f' {side}' if side else ''}"
     if m_type == "merge":
-        return f"Merge{onto}"
-    if modifier in (None, "straight") or m_type in ("new name", "continue"):
-        if modifier in (None, "straight"):
-            return f"Continue straight{onto}" if m_type != "new name" else f"Continue{onto}"
+        return f"Merge {side}" if side else "Merge"
     if modifier == "uturn":
-        return f"Make a U-turn{onto}"
-    return f"Turn {modifier}{onto}"
+        return "U-turn"
+    if side:
+        return f"1st turn {side}"
+    return "Continue"
 
 
-def build_steps(legs: list[Leg], stops: list[PatternStop]) -> list[DriverStep]:
+def build_steps(legs: list[Leg]) -> list[DriverStep]:
     rows: list[DriverStep] = []
     cumulative = 0
+    current_road = None
 
-    def add(**kw):
-        rows.append(DriverStep(step=len(rows) + 1, cumulative_m=cumulative, **kw))
-
-    first = stops[0]
-    add(
-        type="stop",
-        instruction=f"Start at {first.stop_name}",
-        stop_sequence=first.sequence,
-        stop_code=first.stop_code,
-        stop_name=first.stop_name,
-    )
-
-    for leg, stop in zip(legs, stops[1:]):
+    for leg in legs:
         steps = leg.steps
         i = 0
         while i < len(steps):
@@ -52,20 +48,24 @@ def build_steps(legs: list[Leg], stops: list[PatternStop]) -> list[DriverStep]:
                 road, dist, exit_no = nxt.road, dist + nxt.distance_m, nxt.roundabout_exit or exit_no
                 i += 1
             i += 1
+            street_changed = road is not None and road != current_road
+            if street_changed:
+                instruction = _maneuver_detail(s.type, s.modifier, exit_no)
+                rows.append(
+                    DriverStep(
+                        step=len(rows) + 1,
+                        type="maneuver",
+                        turn=_turn_code(s.modifier),
+                        instruction=instruction,
+                        maneuver=s.type,
+                        modifier=s.modifier,
+                        road=road,
+                        roundabout_exit=exit_no,
+                        distance_m=dist,
+                        cumulative_m=cumulative,
+                    )
+                )
             cumulative += dist
-            add(
-                type="maneuver",
-                instruction=_maneuver_text(s.type, s.modifier, road, exit_no),
-                maneuver=s.type,
-                modifier=s.modifier,
-                road=road,
-                distance_m=dist,
-            )
-        add(
-            type="stop",
-            instruction=f"Stop at {stop.stop_name}",
-            stop_sequence=stop.sequence,
-            stop_code=stop.stop_code,
-            stop_name=stop.stop_name,
-        )
+            if road is not None:
+                current_road = road
     return rows

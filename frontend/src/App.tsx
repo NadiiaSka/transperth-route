@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   ArrowDown,
-  ArrowLeft,
   ArrowRight,
   ArrowUp,
   BusFront,
@@ -9,7 +8,6 @@ import {
   ChevronDown,
   CircleAlert,
   Clock3,
-  MapPin,
   Search,
   Sparkles,
 } from "lucide-react";
@@ -24,26 +22,29 @@ type RouteVariant = {
   shape_id: string | null;
   trip_count: number;
   sample_trip_id: string;
+  origin_stop: string | null;
+  destination_stop: string | null;
 };
 
 type DriverStep = {
   step: number;
   type: string;
+  turn: string | null;
   instruction: string;
   maneuver: string | null;
   modifier: string | null;
   road: string | null;
+  roundabout_exit: number | null;
   distance_m: number;
   cumulative_m: number;
-  stop_sequence: number | null;
-  stop_code: string | null;
-  stop_name: string | null;
 };
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 function formatDistance(meters: number) {
-  return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${meters} m`;
+  return meters >= 1000
+    ? `${(meters / 1000).toFixed(1)} km`
+    : `${Math.round(meters)} m`;
 }
 
 function App() {
@@ -113,10 +114,10 @@ function App() {
     }
   }
 
-  function updateInstruction(stepNumber: number, instruction: string) {
+  function updateStep(stepNumber: number, changes: Partial<DriverStep>) {
     setSteps((current) =>
       current.map((step) =>
-        step.step === stepNumber ? { ...step, instruction } : step,
+        step.step === stepNumber ? { ...step, ...changes } : step,
       ),
     );
   }
@@ -124,11 +125,6 @@ function App() {
   const activeVariant = variants.find(
     (variant) => variant.sample_trip_id === selectedTrip,
   );
-  const drivingDistance = steps.reduce(
-    (total, step) => total + step.distance_m,
-    0,
-  );
-  const stopCount = steps.filter((step) => step.type === "stop").length;
 
   return (
     <div className="app-shell">
@@ -254,17 +250,19 @@ function App() {
                 {activeVariant.agency_id ?? "TRANSPERTH"} <span>·</span>{" "}
                 DIRECTION {activeVariant.direction_id ?? "—"}
               </span>
-              <strong>
-                {activeVariant.headsign ?? "Selected route pattern"}
+              <strong className="summary-route">
+                <span>{activeVariant.origin_stop ?? "Origin unavailable"}</span>
+                <ArrowRight size={15} />
+                <span>
+                  {activeVariant.destination_stop ??
+                    activeVariant.headsign ??
+                    "Destination unavailable"}
+                </span>
               </strong>
             </div>
             <div className="summary-stats">
               <span>
-                <MapPin size={15} /> {stopCount || "—"} stops
-              </span>
-              <span>
-                <ArrowRight size={15} />{" "}
-                {steps.length ? formatDistance(drivingDistance) : "—"}
+                <ArrowUp size={15} /> {steps.length || "—"} directions
               </span>
               <span>
                 <Clock3 size={15} /> {activeVariant.trip_count} trips
@@ -282,7 +280,7 @@ function App() {
                 <p>
                   {built
                     ? "Review and edit the route instructions below."
-                    : "Choose a route pattern and build the driving sequence."}
+                    : "Build a concise list of turns and street changes."}
                 </p>
               </div>
             </div>
@@ -304,65 +302,62 @@ function App() {
               <table className="directions-table">
                 <thead>
                   <tr>
-                    <th className="col-step">NO.</th>
-                    <th className="col-action">ACTION</th>
+                    <th className="col-turn">TURN</th>
+                    <th className="col-street">STREET / LANDMARK</th>
                     <th>
-                      DRIVER INSTRUCTION{" "}
+                      TURN / ROUTE DETAILS{" "}
                       <span className="edit-hint">EDITABLE</span>
                     </th>
                     <th className="col-distance">DISTANCE</th>
-                    <th className="col-total">CUMULATIVE</th>
                   </tr>
                 </thead>
                 <tbody>
                   {steps.map((step) => (
                     <tr
-                      className={step.type === "stop" ? "stop-row" : ""}
+                      className={`direction-${step.turn?.toLowerCase() ?? "straight"}`}
                       key={step.step}
                     >
-                      <td className="step-number">
-                        {String(step.step).padStart(2, "0")}
-                      </td>
                       <td>
-                        <span className={`action-icon action-${step.type}`}>
-                          {step.type === "stop" ? (
-                            <MapPin size={15} />
-                          ) : step.modifier?.includes("left") ? (
-                            <ArrowLeft size={15} />
-                          ) : step.modifier?.includes("right") ? (
-                            <ArrowRight size={15} />
-                          ) : (
-                            <ArrowUp size={15} />
-                          )}
-                        </span>
+                        <select
+                          className="turn-cell"
+                          aria-label={`Turn direction ${step.step}`}
+                          value={step.turn ?? ""}
+                          onChange={(event) =>
+                            updateStep(step.step, {
+                              turn: event.target.value || null,
+                            })
+                          }
+                        >
+                          <option value="">—</option>
+                          <option value="L">L</option>
+                          <option value="R">R</option>
+                        </select>
                       </td>
-                      <td className="instruction-cell">
-                        {step.type === "stop" ? (
-                          <div className="stop-instruction">
-                            <strong>{step.instruction}</strong>
-                            {step.stop_code && (
-                              <span>STOP {step.stop_code}</span>
-                            )}
-                          </div>
-                        ) : (
-                          <input
-                            aria-label={`Edit instruction ${step.step}`}
-                            value={step.instruction}
-                            onChange={(event) =>
-                              updateInstruction(step.step, event.target.value)
-                            }
-                          />
-                        )}
+                      <td className="street-cell">
+                        <input
+                          aria-label={`Edit street or landmark ${step.step}`}
+                          value={step.road ?? ""}
+                          placeholder="Street name unavailable"
+                          onChange={(event) =>
+                            updateStep(step.step, {
+                              road: event.target.value || null,
+                            })
+                          }
+                        />
                       </td>
-                      <td className="numeric-cell">
-                        {step.distance_m
-                          ? formatDistance(step.distance_m)
-                          : "—"}
+                      <td className="details-cell">
+                        <input
+                          aria-label={`Edit turn details ${step.step}`}
+                          value={step.instruction}
+                          onChange={(event) =>
+                            updateStep(step.step, {
+                              instruction: event.target.value,
+                            })
+                          }
+                        />
                       </td>
-                      <td className="numeric-cell cumulative-cell">
-                        {step.cumulative_m
-                          ? formatDistance(step.cumulative_m)
-                          : "—"}
+                      <td className="distance-cell">
+                        {formatDistance(step.distance_m)}
                       </td>
                     </tr>
                   ))}
@@ -388,7 +383,7 @@ function App() {
               </strong>
               <span>
                 {loading
-                  ? "Fetching road maneuvers and stop data."
+                  ? "Reading road maneuvers and street changes."
                   : "Search for a bus route to begin."}
               </span>
             </div>

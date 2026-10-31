@@ -18,7 +18,15 @@ SELECT r.route_id,
        t.trip_headsign AS headsign,
        t.shape_id,
        count(*) AS trip_count,
-       min(t.trip_id) AS sample_trip_id
+    min(t.trip_id) AS sample_trip_id,
+    (SELECT s.stop_name
+     FROM stop_times st JOIN stops s USING (stop_id)
+     WHERE st.trip_id = min(t.trip_id)
+     ORDER BY st.stop_sequence ASC LIMIT 1) AS origin_stop,
+    (SELECT s.stop_name
+     FROM stop_times st JOIN stops s USING (stop_id)
+     WHERE st.trip_id = min(t.trip_id)
+     ORDER BY st.stop_sequence DESC LIMIT 1) AS destination_stop
 FROM routes r
 JOIN trips t USING (route_id)
 WHERE r.route_short_name = %(number)s
@@ -90,5 +98,5 @@ def trip_steps(trip_id: str, ai: bool = True):
         legs = osrm.get_legs(pattern.stops)
     except (RuntimeError, httpx.HTTPError) as e:
         raise HTTPException(502, f"Routing service failed: {e}")
-    steps = build_steps(legs, pattern.stops)
+    steps = build_steps(legs)
     return reword(steps) if ai else steps

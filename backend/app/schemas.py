@@ -10,6 +10,8 @@ class RouteVariant(BaseModel):
     shape_id: str | None
     trip_count: int
     sample_trip_id: str
+    origin_stop: str | None
+    destination_stop: str | None
 
 
 class PatternStop(BaseModel):
@@ -41,16 +43,15 @@ class Leg(BaseModel):
 
 class DriverStep(BaseModel):
     step: int
-    type: str  # "stop" | "depart" | "maneuver"
+    type: str
+    turn: str | None = None
     instruction: str
     maneuver: str | None = None
     modifier: str | None = None
     road: str | None = None
+    roundabout_exit: int | None = None
     distance_m: int = 0
     cumulative_m: int = 0
-    stop_sequence: int | None = None
-    stop_code: str | None = None
-    stop_name: str | None = None
 
 
 class RoutePattern(BaseModel):

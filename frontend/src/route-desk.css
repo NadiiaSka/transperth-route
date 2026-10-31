@@ -346,6 +346,21 @@ button:disabled {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.summary-route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.summary-route span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.summary-route svg {
+  flex-shrink: 0;
+  color: var(--green);
+}
 .summary-stats {
   display: flex;
   align-items: center;
@@ -439,116 +454,110 @@ button:disabled {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  min-width: 650px;
 }
 .directions-table thead {
-  background: #edf1e9;
+  background: #5263ba;
 }
 .directions-table th {
   height: 40px;
   padding: 0 12px;
-  border-bottom: 1px solid var(--line);
-  color: #69756d;
+  border-bottom: 1px solid #43539f;
+  color: #fff;
   text-align: left;
-  font: 9px var(--mono);
+  font: 11px var(--body);
 }
-.directions-table .col-step {
-  width: 62px;
-  padding-left: 17px;
+.directions-table .col-turn {
+  width: 68px;
+  text-align: center;
 }
-.directions-table .col-action {
-  width: 54px;
+.directions-table .col-street {
+  width: 30%;
 }
 .directions-table .col-distance {
-  width: 100px;
-}
-.directions-table .col-total {
   width: 112px;
+  text-align: right;
+}
+.distance-cell {
+  padding-right: 18px !important;
+  text-align: right;
+  font: 13px var(--mono);
+  white-space: nowrap;
 }
 .edit-hint {
   margin-left: 7px;
-  color: var(--coral);
-  font-size: 8px;
+  color: #dce1ff;
+  font: 9px var(--mono);
 }
 .directions-table tbody tr {
-  border-bottom: 1px solid #e9ece6;
+  border-bottom: 1px solid #d8dde0;
 }
 .directions-table tbody tr:last-child {
   border-bottom: 0;
 }
 .directions-table tbody tr:hover {
-  background: #f8faf5;
+  filter: brightness(0.97);
 }
 .directions-table td {
-  height: 48px;
-  padding: 5px 12px;
+  height: 56px;
+  padding: 5px 11px;
 }
-.directions-table .step-number {
-  padding-left: 17px;
-  color: #919a92;
-  font: 10px var(--mono);
+.directions-table tbody tr:nth-child(even) {
+  background: #f1f3f5;
 }
-.action-icon {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  color: var(--green);
-  background: var(--soft-green);
+.direction-left {
+  color: #1435f2;
 }
-.action-stop {
-  color: #a64c39;
-  background: #fbe9e2;
+.direction-right {
+  color: #f03418;
 }
-.action-maneuver {
-  color: var(--green);
+.direction-straight {
+  color: #414b4b;
 }
-.instruction-cell input {
+.turn-cell {
+  display: block;
   width: 100%;
-  min-height: 34px;
-  padding: 5px 8px;
+  min-height: 42px;
+  appearance: none;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+  text-align: center;
+  font: 700 26px/1 var(--body);
+  cursor: pointer;
+}
+.turn-cell option {
+  color: var(--ink);
+  font-size: 16px;
+}
+.street-cell input,
+.details-cell input {
+  width: 100%;
+  min-height: 42px;
+  padding: 5px 2px;
   border: 1px solid transparent;
   outline: 0;
-  color: var(--ink);
+  color: inherit;
   background: transparent;
-  font-size: 12px;
+  font-size: 19px;
+  font-weight: 700;
 }
-.instruction-cell input:hover {
-  border-color: #d6ddd3;
+.street-cell input::placeholder {
+  color: #86918f;
+  font-size: 14px;
+  font-weight: 500;
 }
-.instruction-cell input:focus {
+.street-cell input:hover,
+.details-cell input:hover {
+  border-color: #cbd3dc;
+}
+.street-cell input:focus,
+.details-cell input:focus,
+.turn-cell:focus-visible {
   border-color: var(--green);
   background: white;
   box-shadow: 0 0 0 2px #155d4714;
-}
-.stop-instruction {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 9px;
-  padding: 0 8px;
-}
-.stop-instruction strong {
-  color: var(--green-dark);
-  font-size: 12px;
-  font-weight: 700;
-}
-.stop-instruction span {
-  color: #9a5644;
-  font: 9px var(--mono);
-}
-.stop-row {
-  background: #f8f5ed;
-}
-.stop-row:hover {
-  background: #f4f0e4 !important;
-}
-.numeric-cell {
-  color: #59655e;
-  font: 10px var(--mono);
-  white-space: nowrap;
-}
-.cumulative-cell {
-  color: #87918a;
 }
 .table-footer {
   display: flex;

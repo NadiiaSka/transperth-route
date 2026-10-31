@@ -11,10 +11,10 @@ log = logging.getLogger(__name__)
 CHUNK = 60
 
 PROMPT = """You write turn-by-turn instructions for a Perth bus driver.
-For each input item, rewrite its "instruction" as a short imperative sentence (max 12 words).
+For each input item, rewrite its "instruction" as a concise route-detail label.
 Rules:
-- Keep the road name and the turn direction exactly as given; never add roads, landmarks or facts.
-- Keep roundabout exit numbers.
+- Keep left/right direction, ordinal, and roundabout exit number exactly as given.
+- Do not add street names, traffic lights, landmarks, or facts.
 - Return one output per input id, same ids.
 Input:
 """
@@ -27,11 +27,14 @@ class Rewrite(BaseModel):
 
 def _faithful(step: DriverStep, text: str) -> bool:
     t = text.lower()
-    if step.road and step.road.lower() not in t:
-        return False
-    if step.modifier in ("left", "right", "slight left", "slight right", "sharp left", "sharp right"):
-        if step.modifier.split()[-1] not in t:
+    if step.turn:
+        direction = "left" if step.turn == "L" else "right"
+        if direction not in t:
             return False
+    if step.roundabout_exit and str(step.roundabout_exit) not in t:
+        return False
+    if "1st" in step.instruction.lower() and "1st" not in t:
+        return False
     return True
 
 
@@ -43,13 +46,13 @@ def reword(steps: list[DriverStep]) -> list[DriverStep]:
         api_key=settings.gemini_api_key,
         http_options=types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=4)),
     )
-    targets = [s for s in steps if s.type != "stop"]
+    targets = steps
     by_id = {s.step: s for s in steps}
 
     for i in range(0, len(targets), CHUNK):
         chunk = targets[i : i + CHUNK]
         payload = [
-            {"id": s.step, "instruction": s.instruction, "road": s.road, "distance_m": s.distance_m}
+            {"id": s.step, "instruction": s.instruction, "turn": s.turn, "roundabout_exit": s.roundabout_exit}
             for s in chunk
         ]
         try:
@@ -67,6 +70,6 @@ def reword(steps: list[DriverStep]) -> list[DriverStep]:
             return steps
         for r in resp.parsed or []:
             step = by_id.get(r.id)
-            if step and step.type != "stop" and _faithful(step, r.instruction):
+            if step and _faithful(step, r.instruction):
                 step.instruction = r.instruction.strip()
     return steps
