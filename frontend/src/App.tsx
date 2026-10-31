@@ -98,7 +98,7 @@ function App() {
   const [routeShape, setRouteShape] = useState<[number, number][]>([]);
   const [routeMapLoading, setRouteMapLoading] = useState(false);
   const [routeMapError, setRouteMapError] = useState("");
-  const [useAi, setUseAi] = useState(true);
+  const [useAi, setUseAi] = useState(false);
   const [loading, setLoading] = useState(false);
   const [buildingDirections, setBuildingDirections] = useState(false);
   const [error, setError] = useState("");
