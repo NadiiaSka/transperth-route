@@ -46,3 +46,32 @@ def get_legs(stops: list[PatternStop]) -> list[Leg]:
             )
         )
     return legs
+
+
+def match_shape(shape: list[tuple[float, float]]) -> list[Maneuver]:
+    """Get road maneuvers while following the GTFS route geometry."""
+    if len(shape) < 2:
+        return []
+    coords = ";".join(f"{lon:.6f},{lat:.6f}" for lat, lon in shape)
+    resp = httpx.get(
+        f"{settings.osrm_url}/match/v1/driving/{coords}",
+        params={"steps": "true", "overview": "false", "gaps": "ignore"},
+        timeout=60,
+    )
+    data = resp.json()
+    if resp.status_code != 200 or data.get("code") != "Ok":
+        raise RuntimeError(f"OSRM match error: {data.get('code')} {data.get('message', '')}")
+
+    return [
+        Maneuver(
+            type=step["maneuver"]["type"],
+            modifier=step["maneuver"].get("modifier"),
+            road=step.get("name") or None,
+            roundabout_exit=step["maneuver"].get("exit"),
+            distance_m=round(step["distance"]),
+        )
+        for matching in data["matchings"]
+        for leg in matching["legs"]
+        for step in leg["steps"]
+        if step["maneuver"]["type"] != "arrive"
+    ]

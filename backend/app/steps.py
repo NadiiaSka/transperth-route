@@ -1,5 +1,5 @@
 """Build driver table rows from OSRM legs; the server owns structure, the AI only rewords."""
-from .schemas import DriverStep, Leg
+from .schemas import DriverStep, Maneuver
 
 _ROUNDABOUT = {"roundabout", "rotary", "roundabout turn"}
 _EXIT = {"exit roundabout", "exit rotary"}
@@ -32,40 +32,79 @@ def _maneuver_detail(m_type: str, modifier: str | None, exit_no: int | None) -> 
     return "Continue"
 
 
-def build_steps(legs: list[Leg]) -> list[DriverStep]:
-    rows: list[DriverStep] = []
-    cumulative = 0
-    current_road = None
-
-    for leg in legs:
-        steps = leg.steps
-        i = 0
-        while i < len(steps):
-            s = steps[i]
-            road, dist, exit_no = s.road, s.distance_m, s.roundabout_exit
-            if s.type in _ROUNDABOUT and i + 1 < len(steps) and steps[i + 1].type in _EXIT:
-                nxt = steps[i + 1]
-                road, dist, exit_no = nxt.road, dist + nxt.distance_m, nxt.roundabout_exit or exit_no
-                i += 1
+def build_steps(maneuvers: list[Maneuver]) -> list[DriverStep]:
+    streets: list[dict] = []
+    pending_turn: Maneuver | None = None
+    i = 0
+    while i < len(maneuvers):
+        maneuver = maneuvers[i]
+        road, distance, exit_no = maneuver.road, maneuver.distance_m, maneuver.roundabout_exit
+        if maneuver.type in _ROUNDABOUT and i + 1 < len(maneuvers) and maneuvers[i + 1].type in _EXIT:
+            following = maneuvers[i + 1]
+            road = following.road or road
+            distance += following.distance_m
+            exit_no = following.roundabout_exit or exit_no
             i += 1
-            street_changed = road is not None and road != current_road
-            if street_changed:
-                instruction = _maneuver_detail(s.type, s.modifier, exit_no)
-                rows.append(
-                    DriverStep(
-                        step=len(rows) + 1,
-                        type="maneuver",
-                        turn=_turn_code(s.modifier),
-                        instruction=instruction,
-                        maneuver=s.type,
-                        modifier=s.modifier,
-                        road=road,
-                        roundabout_exit=exit_no,
-                        distance_m=dist,
-                        cumulative_m=cumulative,
-                    )
-                )
-            cumulative += dist
-            if road is not None:
-                current_road = road
+        i += 1
+
+        if road is None:
+            if _turn_code(maneuver.modifier):
+                pending_turn = maneuver
+            continue
+
+        if not streets or streets[-1]["road"] != road:
+            turn = maneuver if _turn_code(maneuver.modifier) else pending_turn or maneuver
+            streets.append(
+                {
+                    "road": road,
+                    "distance": 0,
+                    "turn": turn,
+                    "exit": exit_no or turn.roundabout_exit,
+                }
+            )
+            pending_turn = None
+
+        streets[-1]["distance"] += distance
+        if _turn_code(maneuver.modifier):
+            pending_turn = maneuver
+
+    rows = []
+    cumulative = 0
+    for street in streets:
+        turn = street["turn"]
+        rows.append(
+            DriverStep(
+                step=len(rows) + 1,
+                type="maneuver",
+                turn=_turn_code(turn.modifier),
+                instruction=_maneuver_detail(turn.type, turn.modifier, street["exit"]),
+                maneuver=turn.type,
+                modifier=turn.modifier,
+                road=street["road"],
+                roundabout_exit=street["exit"],
+                distance_m=street["distance"],
+                cumulative_m=cumulative,
+            )
+        )
+        cumulative += street["distance"]
     return rows
+
+
+def apply_confirmed_route_steps(
+    steps: list[DriverStep], route_number: str, shape_id: str | None
+) -> list[DriverStep]:
+    if route_number != "51" or shape_id != "125825":
+        return steps
+
+    corrections = {
+        "Cecil Avenue": ("R", "1st turn right"),
+        "Railway Parade": ("L", "To end, turn left"),
+    }
+    return [
+        step.model_copy(
+            update={"turn": corrections[step.road][0], "instruction": corrections[step.road][1]}
+        )
+        if step.road in corrections
+        else step
+        for step in steps
+    ]

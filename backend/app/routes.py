@@ -5,7 +5,7 @@ from . import osrm
 from .ai import reword
 from .db import pool
 from .schemas import DriverStep, Leg, PatternStop, RoutePattern, RouteVariant
-from .steps import build_steps
+from .steps import apply_confirmed_route_steps, build_steps
 
 router = APIRouter(prefix="/api")
 
@@ -95,8 +95,12 @@ def trip_maneuvers(trip_id: str):
 def trip_steps(trip_id: str, ai: bool = True):
     pattern = trip_pattern(trip_id)
     try:
-        legs = osrm.get_legs(pattern.stops)
+        maneuvers = osrm.match_shape(pattern.shape)
     except (RuntimeError, httpx.HTTPError) as e:
         raise HTTPException(502, f"Routing service failed: {e}")
-    steps = build_steps(legs)
+    steps = apply_confirmed_route_steps(
+        build_steps(maneuvers),
+        pattern.variant.route_number,
+        pattern.variant.shape_id,
+    )
     return reword(steps) if ai else steps
