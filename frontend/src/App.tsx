@@ -8,8 +8,10 @@ import {
   ChevronDown,
   CircleAlert,
   Clock3,
+  Plus,
   Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import "./route-desk.css";
 import { RouteMap } from "./RouteMap";
@@ -38,6 +40,7 @@ type DriverStep = {
   roundabout_exit: number | null;
   distance_m: number;
   cumulative_m: number;
+  rowId?: number;
 };
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -70,6 +73,7 @@ function App() {
   const [error, setError] = useState("");
   const [built, setBuilt] = useState(false);
   const patternPickerRef = useRef<HTMLDivElement | null>(null);
+  const rowIdRef = useRef(1);
   const patternTriggerRef = useRef<HTMLButtonElement | null>(null);
   const patternOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const selectedVariantIndex = variants.findIndex(
@@ -186,7 +190,12 @@ function App() {
       const payload = await response.json();
       if (!response.ok)
         throw new Error(payload.detail ?? "Could not build directions.");
-      setSteps(payload);
+      setSteps(
+        (payload as DriverStep[]).map((step: DriverStep) => ({
+          ...step,
+          rowId: rowIdRef.current++,
+        })),
+      );
       setBuilt(true);
     } catch (err) {
       setError(
@@ -215,6 +224,44 @@ function App() {
       current.map((step) =>
         step.step === stepNumber ? { ...step, ...changes } : step,
       ),
+    );
+  }
+
+  function renumberRows(list: DriverStep[]) {
+    return list.map((step, index) => ({ ...step, step: index + 1 }));
+  }
+
+  function insertRow(afterStep: number | null) {
+    setSteps((current) => {
+      const index =
+        afterStep === null
+          ? 0
+          : current.findIndex((step) => step.step === afterStep) + 1;
+      const previous = current[index - 1];
+      const emptyRow: DriverStep = {
+        step: 0,
+        type: "custom",
+        turn: null,
+        instruction: "",
+        maneuver: null,
+        modifier: null,
+        road: null,
+        roundabout_exit: null,
+        distance_m: 0,
+        cumulative_m: previous?.cumulative_m ?? 0,
+        rowId: rowIdRef.current++,
+      };
+      return renumberRows([
+        ...current.slice(0, index),
+        emptyRow,
+        ...current.slice(index),
+      ]);
+    });
+  }
+
+  function deleteRow(stepNumber: number) {
+    setSteps((current) =>
+      renumberRows(current.filter((step) => step.step !== stepNumber)),
     );
   }
 
@@ -507,13 +554,24 @@ function App() {
                       <span className="edit-hint">EDITABLE</span>
                     </th>
                     <th className="col-distance">DISTANCE</th>
+                    <th className="col-actions">
+                      <button
+                        type="button"
+                        className="header-add-row"
+                        aria-label="Add empty row at start"
+                        title="Add empty row at start"
+                        onClick={() => insertRow(null)}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {steps.map((step) => (
                     <tr
                       className={`direction-${step.turn?.toLowerCase() ?? "straight"}`}
-                      key={step.step}
+                      key={step.rowId ?? step.step}
                     >
                       <td>
                         <select
@@ -555,7 +613,29 @@ function App() {
                         />
                       </td>
                       <td className="distance-cell">
-                        {formatDistance(step.distance_m)}
+                        {step.distance_m > 0
+                          ? formatDistance(step.distance_m)
+                          : "—"}
+                      </td>
+                      <td className="row-actions">
+                        <button
+                          type="button"
+                          className="row-action add"
+                          aria-label={`Add empty row below row ${step.step}`}
+                          title="Add empty row below"
+                          onClick={() => insertRow(step.step)}
+                        >
+                          <Plus size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="row-action delete"
+                          aria-label={`Delete row ${step.step}`}
+                          title="Delete row"
+                          onClick={() => deleteRow(step.step)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -566,6 +646,15 @@ function App() {
                   <Check size={15} /> {steps.length} instructions in this
                   pattern
                 </span>
+                <button
+                  type="button"
+                  className="footer-add-row"
+                  onClick={() =>
+                    insertRow(steps[steps.length - 1]?.step ?? null)
+                  }
+                >
+                  <Plus size={12} /> ADD ROW
+                </button>
                 <span>ROUTE DATA · OSM / OSRM</span>
               </div>
             </div>

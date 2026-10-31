@@ -11,6 +11,10 @@
   --green-dark: #104936;
   --lime: #d4f26c;
   --coral: #e97355;
+  --turn-blue: #356b9b;
+  --turn-blue-soft: #e7eff7;
+  --turn-red: #bd4f46;
+  --turn-red-soft: #f8e9e6;
   --soft-green: #e8f1e9;
   --mono: "DM Mono", Consolas, monospace;
   --body: "DM Sans", "Segoe UI", sans-serif;
@@ -665,6 +669,67 @@ button:disabled {
   width: 112px;
   text-align: right;
 }
+.directions-table .col-actions {
+  width: 80px;
+  text-align: center;
+}
+.header-add-row {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff44;
+  border-radius: 4px;
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+}
+.header-add-row:hover {
+  background: #ffffff22;
+}
+.header-add-row:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+.row-actions {
+  padding-right: 8px !important;
+  text-align: center;
+  white-space: nowrap;
+}
+.row-action {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  margin: 0 2px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #69766d;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease,
+    background 0.12s ease;
+}
+.directions-table tbody tr:hover .row-action,
+.directions-table tbody tr:focus-within .row-action,
+.row-action:focus-visible {
+  opacity: 1;
+}
+.row-action.add:hover {
+  border-color: #155d4733;
+  color: var(--green);
+  background: #155d4714;
+}
+.row-action.delete:hover {
+  border-color: #b3372f33;
+  color: #b3372f;
+  background: #b3372f12;
+}
 .distance-cell {
   padding-right: 18px !important;
   text-align: right;
@@ -692,11 +757,11 @@ button:disabled {
 .directions-table tbody tr:nth-child(even) {
   background: #f1f3f5;
 }
-.direction-left {
-  color: #1435f2;
+.direction-l {
+  color: var(--ink);
 }
-.direction-right {
-  color: #f03418;
+.direction-r {
+  color: var(--ink);
 }
 .direction-straight {
   color: #414b4b;
@@ -713,6 +778,16 @@ button:disabled {
   text-align: center;
   font: 700 26px/1 var(--body);
   cursor: pointer;
+}
+.direction-l .turn-cell {
+  border-radius: 3px;
+  color: var(--turn-blue);
+  background: var(--turn-blue-soft);
+}
+.direction-r .turn-cell {
+  border-radius: 3px;
+  color: var(--turn-red);
+  background: var(--turn-red-soft);
 }
 .turn-cell option {
   color: var(--ink);
@@ -764,6 +839,26 @@ button:disabled {
 }
 .table-footer svg {
   color: var(--green);
+}
+.footer-add-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #69766d;
+  background: transparent;
+  font: 9px var(--mono);
+  cursor: pointer;
+}
+.footer-add-row:hover {
+  border-color: #155d4733;
+  color: var(--green);
+  background: #155d4714;
+}
+.footer-add-row svg {
+  color: currentColor;
 }
 .empty-state {
   display: flex;
