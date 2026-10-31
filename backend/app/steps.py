@@ -17,20 +17,21 @@ def _maneuver_detail(
     m_type: str, modifier: str | None, exit_no: int | None, road: str
 ) -> str:
     side = modifier.rsplit(" ", 1)[-1] if modifier and modifier.endswith(("left", "right")) else None
+    side_code = {"left": "L", "right": "R"}.get(side)
     if m_type in _ROUNDABOUT:
         return f"At the roundabout, take exit {exit_no} onto {road}" if exit_no else f"At the roundabout, continue onto {road}"
     if m_type == "end of road":
-        return f"At the end of the road, turn {side} onto {road}" if side else f"At the end of the road, continue onto {road}"
+        return f"At the end of the road, turn {side_code} onto {road}" if side_code else f"At the end of the road, continue onto {road}"
     if m_type == "fork":
-        return f"At the fork, keep {side} onto {road}" if side else f"At the fork, continue onto {road}"
+        return f"At the fork, keep {side_code} onto {road}" if side_code else f"At the fork, continue onto {road}"
     if m_type in ("on ramp", "off ramp"):
-        return f"Take the {side} {m_type} onto {road}" if side else f"Take the {m_type} onto {road}"
+        return f"Take the {side_code} {m_type} onto {road}" if side_code else f"Take the {m_type} onto {road}"
     if m_type == "merge":
-        return f"Merge {side} onto {road}" if side else f"Merge onto {road}"
+        return f"Merge {side_code} onto {road}" if side_code else f"Merge onto {road}"
     if modifier == "uturn":
         return f"Make a U-turn onto {road}"
-    if side:
-        return f"Turn {side} onto {road}"
+    if side_code:
+        return f"Turn {side_code} onto {road}"
     return f"Continue onto {road}"
 
 
@@ -101,8 +102,8 @@ def apply_confirmed_route_steps(
         return steps
 
     corrections = {
-        "Cecil Avenue": ("R", "Turn right onto Cecil Avenue"),
-        "Railway Parade": ("L", "At the end of Railway Parade, turn left"),
+        "Cecil Avenue": ("R", "Turn R onto Cecil Avenue"),
+        "Railway Parade": ("L", "At the end of Railway Parade, turn L"),
     }
     return [
         step.model_copy(

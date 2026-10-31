@@ -1,4 +1,5 @@
 import logging
+import re
 
 from google import genai
 from google.genai import types
@@ -13,7 +14,7 @@ CHUNK = 60
 PROMPT = """You write concise spoken turn-by-turn instructions for a Perth bus driver.
 For each input item, rewrite its "instruction" as a natural navigation cue.
 Rules:
-- Preserve the street name, left/right direction, and roundabout exit number exactly.
+- Preserve the street name, L/R abbreviation, and roundabout exit number exactly.
 - Preserve end-of-road and fork guidance.
 - Do not add turns, traffic lights, landmarks, or facts.
 - Return one output per input id, same ids.
@@ -29,8 +30,11 @@ class Rewrite(BaseModel):
 def _faithful(step: DriverStep, text: str) -> bool:
     t = text.lower()
     if step.turn:
-        direction = "left" if step.turn == "L" else "right"
-        if direction not in t:
+        direction = step.turn.lower()
+        if not re.search(
+            rf"\b(?:turn|keep|merge)\s+{direction}\b|\btake the {direction} (?:on|off) ramp\b",
+            t,
+        ):
             return False
     if step.roundabout_exit and str(step.roundabout_exit) not in t:
         return False
