@@ -8,6 +8,8 @@ import {
   ChevronDown,
   CircleAlert,
   Clock3,
+  Flag,
+  MapPin,
   Plus,
   Search,
   Sparkles,
@@ -603,6 +605,26 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
+                  {activeVariant && (
+                    <tr className="endpoint-row endpoint-start">
+                      <td>
+                        <span className="endpoint-icon" aria-hidden="true">
+                          <Flag size={17} />
+                        </span>
+                      </td>
+                      <td className="street-cell">
+                        <span className="endpoint-title">Start</span>
+                      </td>
+                      <td className="endpoint-detail" colSpan={2}>
+                        Start from{" "}
+                        {displayStopName(
+                          activeVariant.origin_stop,
+                          "Origin unavailable",
+                        )}
+                      </td>
+                      <td />
+                    </tr>
+                  )}
                   {steps.map((step) => {
                     const context = maneuverContext(step);
                     return (
@@ -682,6 +704,26 @@ function App() {
                       </tr>
                     );
                   })}
+                  {activeVariant && (
+                    <tr className="endpoint-row endpoint-end">
+                      <td>
+                        <span className="endpoint-icon" aria-hidden="true">
+                          <MapPin size={17} />
+                        </span>
+                      </td>
+                      <td className="street-cell">
+                        <span className="endpoint-title">End</span>
+                      </td>
+                      <td className="endpoint-detail" colSpan={2}>
+                        Follow to{" "}
+                        {displayStopName(
+                          activeVariant.destination_stop ?? activeVariant.headsign,
+                          "Destination unavailable",
+                        )}
+                      </td>
+                      <td />
+                    </tr>
+                  )}
                 </tbody>
               </table>
               <div className="table-footer">

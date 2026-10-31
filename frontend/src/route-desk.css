@@ -757,6 +757,61 @@ button:disabled {
 .directions-table tbody tr:nth-child(even) {
   background: #f1f3f5;
 }
+.endpoint-row td {
+  height: 50px;
+  vertical-align: middle;
+}
+.endpoint-start {
+  background: var(--soft-green) !important;
+  border-bottom: 1px solid #d2e2d6;
+}
+.endpoint-start .endpoint-icon {
+  color: var(--green);
+  background: #dbeadd;
+}
+.endpoint-end {
+  background: var(--turn-red-soft) !important;
+}
+.endpoint-end .endpoint-icon {
+  color: var(--coral);
+  background: #f8e0d8;
+}
+.endpoint-icon {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+.endpoint-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 14px;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.endpoint-start .endpoint-title {
+  background: var(--green);
+}
+.endpoint-end .endpoint-title {
+  background: var(--coral);
+}
+.endpoint-detail {
+  font-size: 19px;
+  font-weight: 700;
+}
+.endpoint-start .endpoint-detail {
+  color: var(--green-dark);
+}
+.endpoint-end .endpoint-detail {
+  color: #b4552f;
+}
 .direction-l {
   color: var(--ink);
 }
