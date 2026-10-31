@@ -717,7 +717,8 @@ function App() {
                       <td className="endpoint-detail" colSpan={2}>
                         Follow to{" "}
                         {displayStopName(
-                          activeVariant.destination_stop ?? activeVariant.headsign,
+                          activeVariant.destination_stop ??
+                            activeVariant.headsign,
                           "Destination unavailable",
                         )}
                       </td>

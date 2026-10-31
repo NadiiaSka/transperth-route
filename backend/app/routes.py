@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 from . import osrm
 from .ai import reword
 from .db import pool
+from .signals import annotate_turn_signals, signals_along_shape
 from .schemas import (
     DriverStep,
     Leg,
@@ -121,4 +122,5 @@ def trip_steps(trip_id: str, ai: bool = True):
         pattern.variant.route_number,
         pattern.variant.shape_id,
     )
+    steps = annotate_turn_signals(steps, signals_along_shape(pattern.variant.shape_id))
     return reword(steps) if ai else steps

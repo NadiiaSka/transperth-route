@@ -58,8 +58,8 @@ def reword(steps: list[DriverStep]) -> list[DriverStep]:
         api_key=settings.gemini_api_key,
         http_options=types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=4)),
     )
-    targets = steps
-    by_id = {s.step: s for s in steps}
+    targets = [s for s in steps if s.type == "maneuver"]
+    by_id = {s.step: s for s in targets}
 
     for i in range(0, len(targets), CHUNK):
         chunk = targets[i : i + CHUNK]
