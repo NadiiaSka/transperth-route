@@ -15,6 +15,10 @@ from .schemas import (
 
 _ROUNDABOUT = {"roundabout", "rotary", "roundabout turn"}
 
+# Shared client: a fresh httpx.Client per call costs ~400 ms on Windows
+# (trust_env registry proxy lookup), and keep-alive avoids reconnecting.
+_client = httpx.Client(trust_env=False)
+
 
 def _bearing(a: list[float], b: list[float]) -> float:
     """Compass bearing from [lon, lat] point a to b, degrees 0-360."""
@@ -58,7 +62,7 @@ def get_legs(stops: list[PatternStop]) -> list[Leg]:
     """Road-level maneuvers between consecutive stops, from OSRM."""
     if len(stops) < 2:
         return []
-    resp = httpx.get(
+    resp = _client.get(
         f"{settings.osrm_url}/route/v1/driving/{_coords(stops)}",
         params={
             "steps": "true",
@@ -109,7 +113,7 @@ def match_shape(shape: list[tuple[float, float]]) -> list[Maneuver]:
     if len(shape) < 2:
         return []
     coords = ";".join(f"{lon:.6f},{lat:.6f}" for lat, lon in shape)
-    resp = httpx.get(
+    resp = _client.get(
         f"{settings.osrm_url}/match/v1/driving/{coords}",
         params={"steps": "true", "overview": "false", "gaps": "ignore"},
         timeout=60,
@@ -161,7 +165,7 @@ def diagnose_shape_match(shape: list[tuple[float, float]]) -> ShapeMatchDiagnost
         raise ValueError("A route shape needs at least two points")
 
     coords = ";".join(f"{lon:.6f},{lat:.6f}" for lat, lon in shape)
-    resp = httpx.get(
+    resp = _client.get(
         f"{settings.osrm_url}/match/v1/driving/{coords}",
         params={
             "steps": "true",

@@ -10,17 +10,27 @@ _SIGNAL_LABEL = {
 # position where the new street begins.
 _TURN_WINDOW_M = 40
 
+# Query-shape notes (benchmarked on route 240, 2026-11-03: 4575 ms -> 37 ms):
+# - ST_Length/ST_DWithin on geography default to spheroid maths (~1 ms per
+#   line-point pair) — used only where exactness matters, on few rows.
+# - ST_DWithin(geometry, 0.0001) is a Cartesian pre-filter so the existing
+#   geometry GiST index applies; 0.0001 deg >= 9.4 m at Perth latitudes, a
+#   safe superset of the exact 8 m check.
+# - length_m uses spherical geography (~0.3% shorter than spheroid, i.e. a
+#   few metres per shape) and is computed once, not per candidate row.
 _SQL = """
 WITH line AS (
-    SELECT geom FROM shapes WHERE shape_id = %(sid)s
+    SELECT geom, ST_Length(geom::geography, false) AS length_m
+    FROM shapes WHERE shape_id = %(sid)s
 ),
 near AS (
     SELECT rs.kind,
            ST_LineLocatePoint(l.geom, rs.geom) AS frac,
-           ST_Length(l.geom::geography) AS length_m
+           l.length_m
     FROM road_signals rs, line l
-    WHERE ST_DWithin(l.geom::geography, rs.geom::geography, 8)
-      AND rs.kind = ANY(%(kinds)s)
+    WHERE rs.kind = ANY(%(kinds)s)
+      AND ST_DWithin(l.geom, rs.geom, 0.0001)
+      AND ST_DWithin(l.geom::geography, rs.geom::geography, 8)
 )
 SELECT kind, round(frac * length_m)::int AS at_m
 FROM near
