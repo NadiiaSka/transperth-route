@@ -38,7 +38,7 @@ def _maneuver_detail(
     side = modifier.rsplit(" ", 1)[-1] if modifier and modifier.endswith(("left", "right")) else None
     side_code = {"left": "L", "right": "R"}.get(side)
     if m_type in _ROUNDABOUT:
-        return f"At the roundabout, take exit {exit_no} onto {road}" if exit_no else f"At the roundabout, continue onto {road}"
+        return f"Take exit {exit_no} onto {road}" if exit_no else f"Continue onto {road}"
     if m_type == "end of road":
         return f"At the end of the road, turn {side_code} onto {road}" if side_code else f"At the end of the road, continue onto {road}"
     if m_type == "fork":
@@ -123,10 +123,6 @@ def build_steps(maneuvers: list[Maneuver]) -> list[DriverStep]:
         instruction = _maneuver_detail(
             turn.type, turn.modifier, street["exit"], street["road"]
         )
-        passed = street["passed_roundabouts"]
-        if passed:
-            noun = "roundabout" if passed == 1 else "roundabouts"
-            instruction += f", straight through {passed} {noun}"
         rows.append(
             DriverStep(
                 step=len(rows) + 1,
