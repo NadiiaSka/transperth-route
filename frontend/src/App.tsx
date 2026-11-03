@@ -42,6 +42,7 @@ type DriverStep = {
   roundabout_exit: number | null;
   distance_m: number;
   cumulative_m: number;
+  traffic_signal?: boolean;
   rowId?: number;
 };
 
@@ -67,7 +68,7 @@ const ROUNDABOUT_MANEUVERS = new Set([
 ]);
 
 type ManeuverContext = {
-  kind: "roundabout" | "end-of-road" | "fork" | "street";
+  kind: "roundabout" | "end-of-road" | "fork" | "traffic-light" | "street";
   label: string;
 };
 
@@ -85,6 +86,9 @@ function maneuverContext(step: DriverStep): ManeuverContext {
   }
   if (step.maneuver === "fork") {
     return { kind: "fork", label: "FORK" };
+  }
+  if (step.traffic_signal) {
+    return { kind: "traffic-light", label: "TRAFFIC LIGHT" };
   }
   return { kind: "street", label: "STREET" };
 }

@@ -894,6 +894,11 @@ button:disabled {
   background: transparent;
   border: 1px solid #d8dde0;
 }
+.badge-traffic-light {
+  color: #8a5a00;
+  background: #ffb0201f;
+  border: 1px solid #ffb02066;
+}
 .street-cell input::placeholder {
   color: #86918f;
   font-size: 14px;

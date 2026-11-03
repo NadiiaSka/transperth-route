@@ -54,6 +54,9 @@ class DriverStep(BaseModel):
     roundabout_exit: int | None = None
     distance_m: int = 0
     cumulative_m: int = 0
+    # True when a traffic-signal node sits at this turn; the UI tags the
+    # street/landmark column rather than wording it into the instruction.
+    traffic_signal: bool = False
 
 
 class RoutePattern(BaseModel):

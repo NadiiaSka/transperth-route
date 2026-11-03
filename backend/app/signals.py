@@ -51,13 +51,13 @@ def signals_along_shape(shape_id: str | None) -> list[dict]:
 def annotate_turn_signals(
     steps: list[DriverStep], signals: list[dict]
 ) -> list[DriverStep]:
-    """Rewrite a turn's instruction to mention traffic lights when a signal
-    sits at the turn. Signals away from any turn are dropped."""
+    """Tag turns that have a traffic-signal node at them. Signals away from
+    any turn are dropped. The UI surfaces the tag in the street/landmark
+    column; the instruction text itself stays free of signal wording."""
     if not signals:
         return steps
     by_kind = {s["kind"] for s in signals}
-    label = next((v for k, v in _SIGNAL_LABEL.items() if k in by_kind), None)
-    if not label:
+    if not any(k in _SIGNAL_LABEL for k in by_kind):
         return steps
     positions = [s["at_m"] for s in signals]
     for step in steps:
@@ -67,5 +67,5 @@ def annotate_turn_signals(
             # Roundabouts, end-of-road and forks already anchor on a place.
             continue
         if any(abs(p - step.cumulative_m) <= _TURN_WINDOW_M for p in positions):
-            step.instruction = f"At the {label}, {step.instruction[0].lower() + step.instruction[1:]}"
+            step.traffic_signal = True
     return steps
