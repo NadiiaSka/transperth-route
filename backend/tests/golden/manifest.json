@@ -1,0 +1,10 @@
+{
+  "cases": [
+    {
+      "name": "route-240-shape-125950",
+      "route_number": "240",
+      "osrm_meta": "osrm/route_240.meta.json",
+      "golden_file": "route_240_steps.json"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "trip_id": "7070981",
+  "route_number": "240",
+  "shape_id": "125950",
+  "stop_count": 26,
+  "response_file": "route_240_trip_7070981.json",
+  "osrm_url": "http://localhost:5001",
+  "captured_at": "2026-11-04T04:01:05.001614+00:00"
+}

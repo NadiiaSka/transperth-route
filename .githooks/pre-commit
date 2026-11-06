@@ -1,0 +1,18 @@
+#!/bin/sh
+# Fast pre-commit gate: backend unit tests only (~2.5 s).
+# Full suite (integration + golden, needs Docker) runs in CI / pre-push.
+set -e
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+BACKEND="$REPO_ROOT/backend"
+
+# Only run when backend code or tests are touched in this commit.
+if git diff --cached --name-only | grep -q "^backend/"; then
+    echo "pre-commit: backend changes detected, running unit tests..."
+    if [ -x "$BACKEND/.venv/Scripts/python.exe" ]; then
+        PYTHON="$BACKEND/.venv/Scripts/python.exe"
+    else
+        PYTHON="python"
+    fi
+    (cd "$BACKEND" && "$PYTHON" -m pytest -m unit -q)
+fi
