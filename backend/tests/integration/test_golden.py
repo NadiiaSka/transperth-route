@@ -14,10 +14,13 @@ import httpx
 import pytest
 from respx import MockRouter
 
+import sys
+
 BACKEND = Path(__file__).resolve().parents[2]
 FIXTURES = BACKEND / "tests" / "fixtures"
 GOLDEN_DIR = BACKEND / "tests" / "golden"
-OSRM_MOCK_URL = "http://osrm.test"  # must match conftest.OSRM_MOCK_URL
+sys.path.insert(0, str(BACKEND / "tests"))
+from conftest import OSRM_MOCK_URL
 
 pytestmark = pytest.mark.integration
 
@@ -51,15 +54,10 @@ def test_find_routes_unknown_number_404(client):
     assert client.get("/api/routes", params={"number": "987654"}).status_code == 404
 
 
-def test_trip_pattern_matches_fixture(client, case):
-    meta = case["meta"]
-    resp = client.get(f"/api/trips/{meta['trip_id']}/pattern")
+def test_trip_pattern_loads(client, case):
+    """Smoke check that pattern/stops/shape load; the golden pins their content."""
+    resp = client.get(f"/api/trips/{case['meta']['trip_id']}/pattern")
     assert resp.status_code == 200
-    pattern = resp.json()
-    assert pattern["variant"]["route_number"] == case["route_number"]
-    assert pattern["variant"]["shape_id"] == meta["shape_id"]
-    assert len(pattern["stops"]) == meta["stop_count"]
-    assert len(pattern["shape"]) > 50
 
 
 def test_trip_steps_golden(client, case):

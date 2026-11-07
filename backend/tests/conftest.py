@@ -14,8 +14,7 @@ import pytest
 
 BACKEND = Path(__file__).resolve().parents[1]
 FIXTURES = BACKEND / "tests" / "fixtures"
-GOLDEN = BACKEND / "tests" / "golden"
-OSRM_MOCK_URL = "http://osrm.test"
+OSRM_MOCK_URL = "http://osrm.test"  # import from tests if needed; fake host respx intercepts
 
 # app.config.Settings / app.db.pool / app.osrm._client are built at import time,
 # so the env must be in place before any `app.*` module is imported.
@@ -38,19 +37,16 @@ def _load_import_gtfs():
 @pytest.fixture(scope="session")
 def db_url():
     """Scratch database URL. Seeding runs sql/schema.sql, which DROPs tables —
-    this must never point at real data."""
+    this must never point at real data. Set TEST_DATABASE_URL to skip Docker."""
     url = os.environ.get("TEST_DATABASE_URL")
     if url:
-        dbname = url.rsplit("/", 1)[-1].split("?")[0].lower()
-        if "test" not in dbname:
+        if "test" not in url.rsplit("/", 1)[-1].split("?")[0].lower():
             pytest.skip("TEST_DATABASE_URL database name must contain 'test'")
         yield url
         return
     try:
         from testcontainers.community.postgres import PostgresContainer
-    except ImportError:
-        pytest.skip("testcontainers not installed; pip install -r requirements-dev.txt")
-    try:
+
         container = PostgresContainer("postgis/postgis:16-3.4")
         container.start()
     except Exception as exc:
@@ -80,12 +76,14 @@ def seeded_db(db_url):
 
 
 @pytest.fixture(scope="session")
-def client(seeded_db, db_url):
-    """FastAPI TestClient bound to the scratch DB. OSRM_URL is a fake host that
-    tests intercept with respx; Gemini is disabled (ADR 0001)."""
-    os.environ["DATABASE_URL"] = db_url
-    os.environ["OSRM_URL"] = OSRM_MOCK_URL
-    os.environ["GEMINI_API_KEY"] = ""
+def client(seeded_db):
+    """FastAPI TestClient bound to the scratch DB. app.db.pool is built at
+    import time with the default (localhost) URL, so rebind its conninfo to the
+    scratch DB before the pool opens. ConnectionPool reads .conninfo lazily at
+    open()."""
+    from app.db import pool
+
+    pool.conninfo = seeded_db
 
     from fastapi.testclient import TestClient
 

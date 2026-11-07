@@ -4,6 +4,8 @@ node_modules/
 dist/
 .playwright-mcp/
 .env
+.coverage
+.pytest_cache/
 data/gtfs/*
 !data/gtfs/.gitkeep
 data/osm/*
