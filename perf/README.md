@@ -17,6 +17,19 @@ k6 run -e K6_SCENARIO=load perf/directions.k6.js   # load: 5 VUs, 1 min
 k6 run -e TRIP_ID=7070981 perf/directions.k6.js    # different trip
 ```
 
+## Results & comparison
+
+Every run writes a timestamped summary to `perf/results/*.json`. Build the
+trend report from them:
+
+```powershell
+python perf/compare.py                # all runs, delta vs previous, ! on >=50% regression
+python perf/compare.py --baseline 0   # pin a run as the comparison baseline
+```
+
+`results/` is git-ignored (local artifacts). Commit the JSON only if you want
+a permanent record of a specific run (e.g. before/after a perf fix).
+
 ## What it watches
 
 | Metric        | Endpoint                             | Guards against                                    |

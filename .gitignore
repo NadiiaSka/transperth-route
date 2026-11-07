@@ -6,6 +6,10 @@ dist/
 .env
 .coverage
 .pytest_cache/
+allure-results/
+allure-report/
+perf/results/*
+!perf/results/.gitkeep
 data/gtfs/*
 !data/gtfs/.gitkeep
 data/osm/*

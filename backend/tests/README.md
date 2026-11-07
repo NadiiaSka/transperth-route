@@ -63,5 +63,19 @@ after GTFS/OSM/OSRM data refreshes, then review + update the golden.
 - AI rewording is frozen (ADR 0001) and excluded from all tests; the golden
   pins deterministic `instruction` text with `ai=false`.
 - The OSRM recording pins the external routing input, so golden failures mean
-  _our_ code changed, not OSRM.- Latency/load performance tests live in `../perf/` (k6, run against the live
+  _our_ code changed, not OSRM.
+- Latency/load performance tests live in `../perf/` (k6, run against the live
   dev stack) — see `../perf/README.md`.
+
+## Allure reports
+
+```powershell
+pytest --alluredir=allure-results
+allure serve allure-results          # interactive HTML with history/trends
+```
+
+`allure-results/` is git-ignored. Future Playwright e2e/API tests
+(`allure-playwright` reporter) will write into the same directory, so one
+`allure serve` covers backend + frontend. k6 perf results stay separate in
+`../perf/` (metrics, not test cases). Install the Allure CLI via
+`scoop install allure` or `npm i -g allure-commandline`.

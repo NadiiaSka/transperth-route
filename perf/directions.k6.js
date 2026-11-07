@@ -58,5 +58,15 @@ export default function () {
 }
 
 export function handleSummary(data) {
-  return { stdout: textSummary(data, { indent: " ", enableColors: true }) };
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const scenario = __ENV.K6_SCENARIO || "smoke";
+  // Timestamped full summary per run; compare.py builds the trend from these.
+  return {
+    stdout: textSummary(data, { indent: " ", enableColors: true }),
+    [`perf/results/${stamp}_${scenario}_trip${TRIP_ID}.json`]: JSON.stringify(
+      data,
+      null,
+      2,
+    ),
+  };
 }
