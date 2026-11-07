@@ -35,8 +35,18 @@ const maneuvers = new Trend("directions_maneuvers_ms", true);
 
 export default function () {
   const reqs = [
-    ["GET", `${BASE_URL}/api/trips/${TRIP_ID}/steps?ai=false`, null, { tags: { endpoint: "steps_no_ai" } }],
-    ["GET", `${BASE_URL}/api/trips/${TRIP_ID}/maneuvers`, null, { tags: { endpoint: "maneuvers" } }],
+    [
+      "GET",
+      `${BASE_URL}/api/trips/${TRIP_ID}/steps?ai=false`,
+      null,
+      { tags: { endpoint: "steps_no_ai" } },
+    ],
+    [
+      "GET",
+      `${BASE_URL}/api/trips/${TRIP_ID}/maneuvers`,
+      null,
+      { tags: { endpoint: "maneuvers" } },
+    ],
   ];
   const [noai, man] = http.batch(reqs);
 
