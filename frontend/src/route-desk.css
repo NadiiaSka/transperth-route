@@ -817,6 +817,14 @@ button:disabled {
   font: 9px var(--mono);
   letter-spacing: 0.4px;
 }
+.maneuver-tag {
+  max-width: 100%;
+  cursor: pointer;
+}
+.maneuver-tag:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
 .badge-roundabout {
   color: #7a4d00;
   background: #f5c15c33;
@@ -1216,11 +1224,23 @@ button:disabled {
     overflow: hidden;
     vertical-align: middle;
   }
-  .maneuver-badge {
-    display: none;
+  .street-cell {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .maneuver-tag {
+    flex: 0 1 auto;
+    max-width: 56px;
+    margin: 0;
+    padding: 2px 3px;
+    overflow: hidden;
+    font-size: 7px;
+    text-overflow: ellipsis;
   }
   .street-cell input {
-    width: 100%;
+    flex: 1 1 0;
+    width: 0;
     min-width: 0;
     min-height: 40px;
     padding: 0;

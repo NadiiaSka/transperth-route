@@ -87,6 +87,30 @@ type ManeuverContext = {
   label: string;
 };
 
+const MANEUVER_TAGS: { kind: ManeuverContext["kind"]; label: string }[] = [
+  { kind: "street", label: "STREET" },
+  { kind: "roundabout", label: "ROUNDABOUT" },
+  { kind: "end-of-road", label: "END OF ROAD" },
+  { kind: "fork", label: "FORK" },
+  { kind: "traffic-light", label: "TRAFFIC LIGHT" },
+];
+
+function maneuverTagChanges(
+  kind: ManeuverContext["kind"],
+): Partial<DriverStep> {
+  const maneuverByKind: Record<ManeuverContext["kind"], string> = {
+    street: "turn",
+    roundabout: "roundabout",
+    "end-of-road": "end of road",
+    fork: "fork",
+    "traffic-light": "turn",
+  };
+  return {
+    maneuver: maneuverByKind[kind],
+    traffic_signal: kind === "traffic-light",
+  };
+}
+
 function maneuverContext(step: DriverStep): ManeuverContext {
   if (step.maneuver && ROUNDABOUT_MANEUVERS.has(step.maneuver.toLowerCase())) {
     return {
@@ -660,11 +684,25 @@ function App() {
                           </select>
                         </td>
                         <td className="street-cell">
-                          <span
-                            className={`maneuver-badge badge-${context.kind}`}
+                          <select
+                            className={`maneuver-badge maneuver-tag badge-${context.kind}`}
+                            aria-label={`Edit maneuver tag ${step.step}`}
+                            value={context.kind}
+                            onChange={(event) =>
+                              updateStep(
+                                step.step,
+                                maneuverTagChanges(
+                                  event.target.value as ManeuverContext["kind"],
+                                ),
+                              )
+                            }
                           >
-                            {context.label}
-                          </span>
+                            {MANEUVER_TAGS.map((tag) => (
+                              <option key={tag.kind} value={tag.kind}>
+                                {tag.label}
+                              </option>
+                            ))}
+                          </select>
                           <input
                             aria-label={`Edit street or landmark ${step.step}`}
                             value={step.road ?? ""}
