@@ -582,59 +582,6 @@ button:disabled {
 .compact-heading h2 {
   font-size: 17px;
 }
-.ai-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 11px;
-  user-select: none;
-}
-.ai-toggle input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-.toggle-track {
-  position: relative;
-  width: 33px;
-  height: 18px;
-  border: 1px solid #bec9bf;
-  background: #dfe4dc;
-  transition: 0.15s;
-}
-.toggle-track::after {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-  background: white;
-  content: "";
-  transition: 0.15s;
-}
-.ai-toggle input:checked + .toggle-track {
-  border-color: var(--green);
-  background: var(--green);
-}
-.ai-toggle input:checked + .toggle-track::after {
-  left: 17px;
-  background: var(--lime);
-}
-.ai-toggle input:focus-visible + .toggle-track {
-  outline: 2px solid var(--coral);
-  outline-offset: 2px;
-}
-.ai-toggle > span:last-child {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.ai-toggle svg {
-  color: var(--coral);
-}
 .table-wrap {
   overflow: hidden;
   border: 1px solid var(--line);

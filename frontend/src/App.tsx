@@ -105,7 +105,6 @@ function App() {
   const [routeShape, setRouteShape] = useState<[number, number][]>([]);
   const [routeMapLoading, setRouteMapLoading] = useState(false);
   const [routeMapError, setRouteMapError] = useState("");
-  const [useAi, setUseAi] = useState(false);
   const [loading, setLoading] = useState(false);
   const [buildingDirections, setBuildingDirections] = useState(false);
   const [error, setError] = useState("");
@@ -234,7 +233,7 @@ function App() {
     setBuilt(false);
     try {
       const response = await fetch(
-        `${API}/api/trips/${encodeURIComponent(selectedTrip)}/steps?ai=${useAi}`,
+        `${API}/api/trips/${encodeURIComponent(selectedTrip)}/steps?ai=false`,
       );
       const payload = await response.json();
       if (!response.ok)
@@ -582,17 +581,6 @@ function App() {
                 </p>
               </div>
             </div>
-            <label className="ai-toggle">
-              <input
-                type="checkbox"
-                checked={useAi}
-                onChange={(event) => setUseAi(event.target.checked)}
-              />
-              <span className="toggle-track" />
-              <span>
-                <Sparkles size={14} /> AI wording
-              </span>
-            </label>
           </div>
 
           {steps.length > 0 ? (
