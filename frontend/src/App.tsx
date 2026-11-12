@@ -57,6 +57,18 @@ function formatDistance(meters: number) {
     : `${Math.round(meters)} m`;
 }
 
+function formatTurnDetails(step: DriverStep) {
+  const distance = formatDistance(step.distance_m);
+  const maneuver = step.maneuver?.toLowerCase() ?? "";
+  const action =
+    ROUNDABOUT_MANEUVERS.has(maneuver) && step.roundabout_exit
+      ? `Exit ${step.roundabout_exit}`
+      : step.turn
+        ? `${maneuver === "fork" ? "keep" : "turn"} ${step.turn}`
+        : "continue";
+  return `${distance} · ${action}`;
+}
+
 function displayStopName(name: string | null, fallback: string) {
   const displayName = name
     ?.replace(/\s+(?:stand|zone)\s+[a-z0-9]+$/i, "")
@@ -240,6 +252,7 @@ function App() {
         throw new Error(payload.detail ?? "Could not build directions.");
       const builtSteps = (payload as DriverStep[]).map((step: DriverStep) => ({
         ...step,
+        instruction: formatTurnDetails(step),
         rowId: rowIdRef.current++,
       }));
       stepsCacheRef.current.set(selectedTrip, builtSteps);
@@ -590,10 +603,7 @@ function App() {
                   <tr>
                     <th className="col-turn">TURN</th>
                     <th className="col-street">STREET / LANDMARK</th>
-                    <th>
-                      TURN / ROUTE DETAILS{" "}
-                      <span className="edit-hint">EDITABLE</span>
-                    </th>
+                    <th>INSTRUCTIONS </th>
                     <th className="col-distance">DISTANCE</th>
                     <th className="col-actions">
                       <button
