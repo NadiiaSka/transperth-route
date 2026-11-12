@@ -46,7 +46,9 @@ type DriverStep = {
   rowId?: number;
 };
 
-const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+const API =
+  import.meta.env.VITE_API_BASE_URL ??
+  (import.meta.env.DEV ? "http://localhost:8000" : "");
 
 function formatDistance(meters: number) {
   return meters >= 1000
@@ -181,6 +183,12 @@ function App() {
     event.preventDefault();
     const number = routeNumber.trim();
     if (!number) return;
+    if (!API) {
+      setError(
+        "Backend URL is not configured. Set VITE_API_BASE_URL in Vercel and redeploy.",
+      );
+      return;
+    }
 
     setLoading(true);
     setError("");
