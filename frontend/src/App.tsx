@@ -208,9 +208,12 @@ function App() {
       const payload = await response.json();
       if (!response.ok)
         throw new Error(payload.detail ?? "Could not find this route.");
-      setVariants(payload);
-      if (payload[0]) setRouteMapLoading(true);
-      setSelectedTrip(payload[0]?.sample_trip_id ?? "");
+      const sortedVariants = [...(payload as RouteVariant[])].sort(
+        (a, b) => b.trip_count - a.trip_count,
+      );
+      setVariants(sortedVariants);
+      if (sortedVariants[0]) setRouteMapLoading(true);
+      setSelectedTrip(sortedVariants[0]?.sample_trip_id ?? "");
     } catch (err) {
       setError(
         err instanceof Error
