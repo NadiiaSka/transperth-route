@@ -333,7 +333,6 @@ function App() {
   const activeVariant = variants.find(
     (variant) => variant.sample_trip_id === selectedTrip,
   );
-
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -603,8 +602,7 @@ function App() {
                   <tr>
                     <th className="col-turn">TURN</th>
                     <th className="col-street">STREET / LANDMARK</th>
-                    <th>INSTRUCTIONS </th>
-                    <th className="col-distance">DISTANCE</th>
+                    <th>INSTRUCTIONS</th>
                     <th className="col-actions">
                       <button
                         type="button"
@@ -636,7 +634,6 @@ function App() {
                           "Origin unavailable",
                         )}
                       </td>
-                      <td />
                     </tr>
                   )}
                   {steps.map((step) => {
@@ -646,7 +643,7 @@ function App() {
                         className={`direction-${step.turn?.toLowerCase() ?? "straight"} context-${context.kind}`}
                         key={step.rowId ?? step.step}
                       >
-                        <td>
+                        <td className="turn-control-cell">
                           <select
                             className="turn-cell"
                             aria-label={`Turn direction ${step.step}`}
@@ -690,11 +687,6 @@ function App() {
                             }
                           />
                         </td>
-                        <td className="distance-cell">
-                          {step.distance_m > 0
-                            ? formatDistance(step.distance_m)
-                            : "—"}
-                        </td>
                         <td className="row-actions">
                           <button
                             type="button"
@@ -736,7 +728,6 @@ function App() {
                           "Destination unavailable",
                         )}
                       </td>
-                      <td />
                     </tr>
                   )}
                 </tbody>
@@ -754,6 +745,13 @@ function App() {
                   }
                 >
                   <Plus size={12} /> ADD ROW
+                </button>
+                <button
+                  type="button"
+                  className="footer-add-row mobile-add-start"
+                  onClick={() => insertRow(null)}
+                >
+                  <Plus size={12} /> ADD AT START
                 </button>
                 <span>ROUTE DATA · OSM / OSRM</span>
               </div>

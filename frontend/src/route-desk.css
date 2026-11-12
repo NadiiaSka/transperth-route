@@ -612,10 +612,6 @@ button:disabled {
 .directions-table .col-street {
   width: 30%;
 }
-.directions-table .col-distance {
-  width: 112px;
-  text-align: right;
-}
 .directions-table .col-actions {
   width: 80px;
   text-align: center;
@@ -901,6 +897,9 @@ button:disabled {
 .footer-add-row svg {
   color: currentColor;
 }
+.mobile-add-start {
+  display: none;
+}
 .empty-state {
   display: flex;
   min-height: 178px;
@@ -1176,10 +1175,118 @@ button:disabled {
     flex-basis: 28px;
   }
   .directions-table {
-    min-width: 650px;
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: collapse;
   }
   .table-wrap {
-    overflow-x: auto;
+    overflow: hidden;
+  }
+  .directions-table .col-turn {
+    width: 42px;
+  }
+  .directions-table .col-street {
+    width: 38%;
+  }
+  .directions-table .col-actions {
+    width: 60px;
+  }
+  .directions-table th {
+    height: 38px;
+    padding: 0 4px;
+    font-size: 9px;
+  }
+  .directions-table tbody tr:not(.endpoint-row) {
+    height: 50px;
+    border-left: 0;
+    box-shadow: none;
+  }
+  .directions-table tbody tr:not(.endpoint-row) td {
+    height: 50px;
+    min-width: 0;
+    padding: 4px;
+    white-space: nowrap;
+  }
+  .turn-cell {
+    min-height: 40px;
+    font-size: 20px;
+  }
+  .street-cell {
+    overflow: hidden;
+    vertical-align: middle;
+  }
+  .maneuver-badge {
+    display: none;
+  }
+  .street-cell input {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .details-cell {
+    display: table-cell;
+  }
+  .details-cell input {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 2px;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .row-actions {
+    display: table-cell;
+    padding-right: 2px !important;
+    white-space: nowrap;
+  }
+  .row-action {
+    width: 26px;
+    height: 38px;
+    margin: 0;
+    border-color: transparent;
+    background: transparent;
+    opacity: 1;
+  }
+  .directions-table tbody tr.endpoint-row {
+    display: table-row;
+  }
+  .endpoint-row td {
+    height: 46px;
+    padding: 4px 8px;
+  }
+  .endpoint-row .endpoint-detail {
+    font-size: 14px;
+  }
+  .endpoint-icon {
+    min-height: 36px;
+  }
+  .endpoint-title {
+    min-height: 30px;
+    padding: 0 10px;
+  }
+  .table-footer {
+    min-height: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+  }
+  .table-footer > span:first-child {
+    flex: 1 1 100%;
+  }
+  .table-footer > span:last-child {
+    flex: 1 1 100%;
+  }
+  .mobile-add-start {
+    display: inline-flex;
   }
   .page-footer {
     align-items: flex-start;
