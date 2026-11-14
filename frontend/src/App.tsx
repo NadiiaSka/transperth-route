@@ -684,25 +684,31 @@ function App() {
                           </select>
                         </td>
                         <td className="street-cell">
-                          <select
-                            className={`maneuver-badge maneuver-tag badge-${context.kind}`}
-                            aria-label={`Edit maneuver tag ${step.step}`}
-                            value={context.kind}
-                            onChange={(event) =>
-                              updateStep(
-                                step.step,
-                                maneuverTagChanges(
-                                  event.target.value as ManeuverContext["kind"],
-                                ),
-                              )
-                            }
+                          <span
+                            className="maneuver-tag-wrap"
+                            data-kind={context.kind}
                           >
-                            {MANEUVER_TAGS.map((tag) => (
-                              <option key={tag.kind} value={tag.kind}>
-                                {tag.label}
-                              </option>
-                            ))}
-                          </select>
+                            <select
+                              className={`maneuver-badge maneuver-tag badge-${context.kind}`}
+                              aria-label={`Edit maneuver tag ${step.step}`}
+                              value={context.kind}
+                              onChange={(event) =>
+                                updateStep(
+                                  step.step,
+                                  maneuverTagChanges(
+                                    event.target
+                                      .value as ManeuverContext["kind"],
+                                  ),
+                                )
+                              }
+                            >
+                              {MANEUVER_TAGS.map((tag) => (
+                                <option key={tag.kind} value={tag.kind}>
+                                  {tag.label}
+                                </option>
+                              ))}
+                            </select>
+                          </span>
                           <input
                             aria-label={`Edit street or landmark ${step.step}`}
                             value={step.road ?? ""}

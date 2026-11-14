@@ -1224,15 +1224,46 @@ button:disabled {
     overflow: hidden;
     vertical-align: middle;
   }
+  .maneuver-tag-wrap {
+    position: relative;
+    display: block;
+    width: 56px;
+    max-width: 100%;
+  }
   .maneuver-tag {
     display: block;
-    width: fit-content;
-    max-width: 56px;
+    width: 100%;
+    max-width: 100%;
     margin: 0;
     padding: 2px 3px;
     overflow: hidden;
     font-size: 7px;
     text-overflow: ellipsis;
+  }
+  .maneuver-tag-wrap[data-kind="roundabout"] .maneuver-tag,
+  .maneuver-tag-wrap[data-kind="traffic-light"] .maneuver-tag,
+  .maneuver-tag-wrap[data-kind="end-of-road"] .maneuver-tag {
+    color: transparent;
+  }
+  .maneuver-tag-wrap::after {
+    position: absolute;
+    top: 50%;
+    left: 6px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font: 7px var(--mono);
+  }
+  .maneuver-tag-wrap[data-kind="roundabout"]::after {
+    content: "RB";
+    color: #7a4d00;
+  }
+  .maneuver-tag-wrap[data-kind="traffic-light"]::after {
+    content: "TRL";
+    color: #8a5a00;
+  }
+  .maneuver-tag-wrap[data-kind="end-of-road"]::after {
+    content: "EOR";
+    color: #5b4bb5;
   }
   .street-cell input {
     display: block;
