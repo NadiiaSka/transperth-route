@@ -1148,6 +1148,17 @@ button:disabled {
   .route-form {
     margin-top: 19px;
   }
+  .form-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .route-input-wrap {
+    width: 100%;
+  }
+  .primary-button {
+    width: 100%;
+    white-space: nowrap;
+  }
   .variant-row {
     grid-template-columns: 1fr;
   }
@@ -1355,16 +1366,6 @@ button:disabled {
   }
   .meta-divider {
     display: none;
-  }
-  .form-controls {
-    align-items: stretch;
-    flex-direction: column;
-  }
-  .route-input-wrap {
-    width: 100%;
-  }
-  .primary-button {
-    width: 100%;
   }
   .run-summary {
     flex-wrap: wrap;
