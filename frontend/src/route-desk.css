@@ -1206,12 +1206,12 @@ button:disabled {
     font-size: 9px;
   }
   .directions-table tbody tr:not(.endpoint-row) {
-    height: 50px;
+    height: 58px;
     border-left: 0;
     box-shadow: none;
   }
   .directions-table tbody tr:not(.endpoint-row) td {
-    height: 50px;
+    height: 58px;
     min-width: 0;
     padding: 4px;
     white-space: nowrap;
@@ -1224,13 +1224,9 @@ button:disabled {
     overflow: hidden;
     vertical-align: middle;
   }
-  .street-cell {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-  }
   .maneuver-tag {
-    flex: 0 1 auto;
+    display: block;
+    width: fit-content;
     max-width: 56px;
     margin: 0;
     padding: 2px 3px;
@@ -1239,15 +1235,18 @@ button:disabled {
     text-overflow: ellipsis;
   }
   .street-cell input {
-    flex: 1 1 0;
-    width: 0;
+    display: block;
+    width: 100%;
     min-width: 0;
-    min-height: 40px;
+    min-height: 28px;
     padding: 0;
     overflow: hidden;
-    font-size: 13px;
-    text-overflow: ellipsis;
+    font-size: 11px;
+    text-overflow: clip;
     white-space: nowrap;
+  }
+  .street-cell input::placeholder {
+    font-size: 10px;
   }
   .details-cell {
     display: table-cell;
