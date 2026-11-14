@@ -2,12 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
-  ArrowUp,
   BusFront,
   Check,
   ChevronDown,
   CircleAlert,
-  Clock3,
   Flag,
   MapPin,
   Plus,
@@ -550,7 +548,12 @@ function App() {
             <div className="summary-main">
               <span className="summary-kicker">
                 {activeVariant.agency_id ?? "TRANSPERTH"} <span>·</span>{" "}
-                DIRECTION {activeVariant.direction_id ?? "—"}
+                Direction{" "}
+                {activeVariant.direction_id === 0
+                  ? "F"
+                  : activeVariant.direction_id === 1
+                    ? "T"
+                    : "—"}
               </span>
               <strong className="summary-route">
                 <span>
@@ -567,14 +570,6 @@ function App() {
                   )}
                 </span>
               </strong>
-            </div>
-            <div className="summary-stats">
-              <span>
-                <ArrowUp size={15} /> {steps.length || "—"} directions
-              </span>
-              <span>
-                <Clock3 size={15} /> {activeVariant.trip_count} trips
-              </span>
             </div>
           </section>
         )}
