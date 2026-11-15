@@ -9,6 +9,7 @@ import {
   Flag,
   MapPin,
   Plus,
+  Ruler,
   Search,
   Sparkles,
   Trash2,
@@ -137,6 +138,7 @@ function App() {
   const [patternOpen, setPatternOpen] = useState(false);
   const [steps, setSteps] = useState<DriverStep[]>([]);
   const [routeShape, setRouteShape] = useState<[number, number][]>([]);
+  const [routeDistanceM, setRouteDistanceM] = useState<number | null>(null);
   const [routeMapLoading, setRouteMapLoading] = useState(false);
   const [routeMapError, setRouteMapError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -210,6 +212,35 @@ function App() {
     }
 
     void loadRouteShape();
+    return () => controller.abort();
+  }, [selectedTrip]);
+
+  useEffect(() => {
+    if (!selectedTrip) {
+      setRouteDistanceM(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadRouteDistance() {
+      try {
+        const response = await fetch(
+          `${API}/api/trips/${encodeURIComponent(selectedTrip)}/maneuvers`,
+          { signal: controller.signal },
+        );
+        const legs: { distance_m: number }[] = await response.json();
+        if (!response.ok) return;
+        setRouteDistanceM(
+          legs.reduce((total, leg) => total + leg.distance_m, 0),
+        );
+      } catch {
+        if (!controller.signal.aborted) setRouteDistanceM(null);
+      }
+    }
+
+    setRouteDistanceM(null);
+    void loadRouteDistance();
     return () => controller.abort();
   }, [selectedTrip]);
 
@@ -570,6 +601,12 @@ function App() {
                   )}
                 </span>
               </strong>
+            </div>
+            <div className="summary-stats">
+              <span>
+                <Ruler size={15} /> Route distance{" "}
+                {routeDistanceM === null ? "—" : formatDistance(routeDistanceM)}
+              </span>
             </div>
           </section>
         )}
