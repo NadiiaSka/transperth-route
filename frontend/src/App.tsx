@@ -56,8 +56,8 @@ function formatDistance(meters: number) {
     : `${Math.round(meters)} m`;
 }
 
-function formatTurnDetails(step: DriverStep) {
-  const distance = formatDistance(step.distance_m);
+function formatTurnDetails(step: DriverStep, previousStep?: DriverStep) {
+  const distance = formatDistance(previousStep?.distance_m ?? step.distance_m);
   const maneuver = step.maneuver?.toLowerCase() ?? "";
   const action =
     ROUNDABOUT_MANEUVERS.has(maneuver) && step.roundabout_exit
@@ -216,10 +216,7 @@ function App() {
   }, [selectedTrip]);
 
   useEffect(() => {
-    if (!selectedTrip) {
-      setRouteDistanceM(null);
-      return;
-    }
+    if (!selectedTrip) return;
 
     const controller = new AbortController();
 
@@ -239,7 +236,6 @@ function App() {
       }
     }
 
-    setRouteDistanceM(null);
     void loadRouteDistance();
     return () => controller.abort();
   }, [selectedTrip]);
@@ -259,6 +255,7 @@ function App() {
     setError("");
     setVariants([]);
     setSelectedTrip("");
+    setRouteDistanceM(null);
     setSteps([]);
     stepsCacheRef.current.clear();
     setRouteShape([]);
@@ -303,9 +300,10 @@ function App() {
       const payload = await response.json();
       if (!response.ok)
         throw new Error(payload.detail ?? "Could not build directions.");
-      const builtSteps = (payload as DriverStep[]).map((step: DriverStep) => ({
+      const directionRows = payload as DriverStep[];
+      const builtSteps = directionRows.map((step, index) => ({
         ...step,
-        instruction: formatTurnDetails(step),
+        instruction: formatTurnDetails(step, directionRows[index - 1]),
         rowId: rowIdRef.current++,
       }));
       stepsCacheRef.current.set(selectedTrip, builtSteps);
@@ -328,6 +326,7 @@ function App() {
       stepsCacheRef.current.set(selectedTrip, steps);
     }
     const cached = stepsCacheRef.current.get(variant.sample_trip_id);
+    if (variant.sample_trip_id !== selectedTrip) setRouteDistanceM(null);
     setSelectedTrip(variant.sample_trip_id);
     setSteps(cached ?? []);
     setRouteShape([]);
