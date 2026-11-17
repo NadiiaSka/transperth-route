@@ -9,6 +9,7 @@ import {
   Flag,
   MapPin,
   Plus,
+  Printer,
   Ruler,
   Search,
   Sparkles,
@@ -648,6 +649,15 @@ function App() {
                 </p>
               </div>
             </div>
+            {steps.length > 0 && (
+              <button
+                className="print-button"
+                type="button"
+                onClick={() => window.print()}
+              >
+                <Printer size={16} /> Print{" "}
+              </button>
+            )}
           </div>
 
           {steps.length > 0 ? (
@@ -713,6 +723,7 @@ function App() {
                             <option value="L">L</option>
                             <option value="R">R</option>
                           </select>
+                          <span className="print-only">{step.turn || "—"}</span>
                         </td>
                         <td className="street-cell">
                           <span
@@ -740,6 +751,9 @@ function App() {
                               ))}
                             </select>
                           </span>
+                          <span className="print-only print-maneuver">
+                            {context.label}
+                          </span>
                           <input
                             aria-label={`Edit street or landmark ${step.step}`}
                             value={step.road ?? ""}
@@ -750,6 +764,9 @@ function App() {
                               })
                             }
                           />
+                          <span className="print-only print-street">
+                            {step.road || "Street name unavailable"}
+                          </span>
                         </td>
                         <td className="details-cell">
                           <input
@@ -761,6 +778,7 @@ function App() {
                               })
                             }
                           />
+                          <span className="print-only">{step.instruction}</span>
                         </td>
                         <td className="row-actions">
                           <button
