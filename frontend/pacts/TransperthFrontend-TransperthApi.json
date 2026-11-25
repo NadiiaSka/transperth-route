@@ -1,0 +1,101 @@
+{
+  "consumer": {
+    "name": "TransperthFrontend"
+  },
+  "interactions": [
+    {
+      "description": "a request for route 240",
+      "pending": false,
+      "request": {
+        "method": "GET",
+        "path": "/api/routes",
+        "query": {
+          "number": [
+            "240"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": [
+            {
+              "route_id": "SWA-SRI-146",
+              "route_number": "240",
+              "sample_trip_id": "7070970",
+              "trip_count": 2
+            }
+          ],
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$[*].route_id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$[*].route_number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$[*].sample_trip_id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$[*].trip_count": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "17.1.4"
+    },
+    "pactRust": {
+      "ffi": "0.5.8",
+      "models": "1.3.16"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "TransperthApi"
+  }
+}

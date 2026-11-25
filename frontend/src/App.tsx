@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { fetchRouteVariants, type RouteVariant } from "./routeApi";
 import {
   ArrowDown,
   ArrowRight,
@@ -17,19 +18,6 @@ import {
 } from "lucide-react";
 import "./route-desk.css";
 import { RouteMap } from "./RouteMap";
-
-type RouteVariant = {
-  route_id: string;
-  route_number: string;
-  agency_id: string | null;
-  direction_id: number | null;
-  headsign: string | null;
-  shape_id: string | null;
-  trip_count: number;
-  sample_trip_id: string;
-  origin_stop: string | null;
-  destination_stop: string | null;
-};
 
 type DriverStep = {
   step: number;
@@ -264,15 +252,7 @@ function App() {
     setRouteMapError("");
     setBuilt(false);
     try {
-      const response = await fetch(
-        `${API}/api/routes?number=${encodeURIComponent(number)}`,
-      );
-      const payload = await response.json();
-      if (!response.ok)
-        throw new Error(payload.detail ?? "Could not find this route.");
-      const sortedVariants = [...(payload as RouteVariant[])].sort(
-        (a, b) => b.trip_count - a.trip_count,
-      );
+      const sortedVariants = await fetchRouteVariants(API, number);
       setVariants(sortedVariants);
       if (sortedVariants[0]) setRouteMapLoading(true);
       setSelectedTrip(sortedVariants[0]?.sample_trip_id ?? "");
