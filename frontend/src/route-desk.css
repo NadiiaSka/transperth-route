@@ -1403,7 +1403,7 @@ button:disabled {
 }
 
 @page {
-  size: landscape;
+  size: portrait;
   margin: 12mm;
 }
 
