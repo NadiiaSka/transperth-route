@@ -34,6 +34,32 @@ $env:TEST_DATABASE_URL = "postgresql://transperth:transperth@localhost:5432/tran
 The database name must contain `test` — seeding runs `sql/schema.sql`, which
 DROPs tables. Never point it at real data.
 
+## Pact contracts
+
+The [Pact workflow](../../.github/workflows/pact.yml) generates the frontend
+contract and verifies it against the FastAPI route handler on pull requests,
+pushes to `main`, and manual GitHub Actions runs. The test provider uses a
+fixture instead of PostGIS, so it does not replace the integration tests.
+
+To run it locally, start the provider in a backend terminal:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m uvicorn pact_provider:app --host 127.0.0.1 --port 8001
+```
+
+In another terminal, generate and verify the contract:
+
+```powershell
+cd frontend
+node --test tests\route.pact.test.mjs
+node --test tests\verify-provider.test.mjs
+```
+
+Pact JS requires x64 Node on Windows. If using x64 emulation, add the x64 Node
+directory to `PATH` in the frontend terminal before running the tests. Stop the
+provider with Ctrl+C when finished.
+
 ## Updating the golden file
 
 After an _intended_ change to step building / signal annotation:

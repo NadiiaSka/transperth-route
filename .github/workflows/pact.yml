@@ -1,0 +1,77 @@
+name: Pact contract tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pact:
+    name: Generate and verify contract
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Generate consumer contract
+        working-directory: frontend
+        run: |
+          rm -f pacts/TransperthFrontend-TransperthApi.json
+          node --test tests/route.pact.test.mjs
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+
+      - name: Start provider and verify contract
+        shell: bash
+        run: |
+          cd backend
+          .venv/bin/python -m uvicorn pact_provider:app \
+            --host 127.0.0.1 --port 8001 &
+          provider_pid=$!
+          trap 'kill "$provider_pid" 2>/dev/null || true' EXIT
+
+          ready=0
+          for attempt in {1..30}; do
+            if curl -fsS 'http://127.0.0.1:8001/api/routes?number=240' > /dev/null; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$provider_pid" 2>/dev/null; then
+              echo "Test provider exited before becoming ready"
+              exit 1
+            fi
+            sleep 1
+          done
+
+          if [ "$ready" -ne 1 ]; then
+            echo "Test provider did not become ready"
+            exit 1
+          fi
+
+          cd ../frontend
+          node --test tests/verify-provider.test.mjs
